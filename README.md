@@ -77,12 +77,17 @@ FLASK_DEBUG=1 python server.py
 
 `VOICE MELODY` is the main way to make the voice follow notes instead of only wobbling around one pitch.
 
+The sidebar separates two different pitch layers:
+
+- `PITCH FX`: static transpose plus wobble/vibrato. It makes the voice unstable, but it does not choose notes.
+- `MELODY NOTES`: the actual note-following layer. It reads `SCALE`, `ROOT`, and `STEPS` to move words or phrases through a melody.
+
 Recommended starting point:
 
 1. Select `SAM (1982 RETRO)`.
 2. Select SAM preset `I FEEL FANTASTIC`.
-3. Enable `SING -> I FEEL FANTASTIC`.
-4. Enable `VOICE MELODY -> FOLLOW NOTES`.
+3. Enable `PITCH FX -> ENABLE PITCH FX` if you want wobble.
+4. Enable `MELODY NOTES -> FOLLOW NOTE PATTERN`.
 5. Set `MODE` to `WORD NOTES`.
 6. Try presets like `FANTASTIC MINOR`, `MINOR DESCENT`, `TRITONE`, or `OCTAVE TEST`.
 7. Type `I feel fantastic hey hey hey` and press `Enter`.

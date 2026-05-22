@@ -107,14 +107,18 @@
                     </div>
                 </section>
 
-                <!-- SING MODE -->
-                <section class="ctrl-section">
-                    <div class="section-title">═══ SING ═══</div>
+                <!-- PITCH FX -->
+                <section class="ctrl-section ctrl-section-help">
+                    <div class="section-title">═══ PITCH FX ═══</div>
+                    <div class="ctrl-hint">
+                        <span class="hint-tag">NO NOTES</span>
+                        Static pitch offset plus LFO wobble. Creepy drift, not a melody.
+                    </div>
                     <div class="param-row">
                         <label for="sing-enabled" class="toggle-label">
                             <input type="checkbox" id="sing-enabled">
                             <span class="toggle-indicator"></span>
-                            I FEEL FANTASTIC
+                            ENABLE PITCH FX
                         </label>
                     </div>
                     <div class="param-row">
@@ -144,13 +148,17 @@
                 </section>
 
                 <!-- VOICE MELODY -->
-                <section class="ctrl-section">
-                    <div class="section-title">═══ VOICE MELODY ═══</div>
+                <section class="ctrl-section ctrl-section-help melody-section">
+                    <div class="section-title">═══ MELODY NOTES ═══</div>
+                    <div class="ctrl-hint">
+                        <span class="hint-tag">ACTUAL NOTES</span>
+                        Assigns note steps to words or bends the phrase through a scale.
+                    </div>
                     <div class="param-row">
                         <label for="melody-enabled" class="toggle-label">
                             <input type="checkbox" id="melody-enabled">
                             <span class="toggle-indicator"></span>
-                            FOLLOW NOTES
+                            FOLLOW NOTE PATTERN
                         </label>
                     </div>
                     <div class="param-row">
@@ -171,6 +179,10 @@
                             <option value="word" selected>WORD NOTES</option>
                             <option value="phrase">PHRASE BEND</option>
                         </select>
+                    </div>
+                    <div class="mode-help">
+                        <span>WORD NOTES = one note per word.</span>
+                        <span>PHRASE BEND = one phrase, moving pitch curve.</span>
                     </div>
                     <div class="param-row">
                         <label for="melody-scale">SCALE:</label>
