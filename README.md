@@ -101,7 +101,7 @@ Controls:
 - `SCALE`: major, minor, harmonic minor, pentatonic minor, chromatic, or whole tone.
 - `ROOT`: transposes the pattern by semitone.
 - `STEPS`: scale degrees or note names.
-- `BPM`: note step rate.
+- `BPM`: note step rate for `PHRASE BEND`. `WORD NOTES` keeps natural word spacing instead of inserting BPM silence.
 - `RANGE`: interval exaggeration. Higher values sound more uncanny.
 - `GLIDE`: pitch smoothing time. Higher values smear notes into each other.
 - `REPEAT STEPS`: loops the note pattern across long phrases.

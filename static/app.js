@@ -66,6 +66,9 @@
     const AUDIO_BUFFER_CACHE = new Map();
     const MAX_WORD_MELODY_TOKENS = 32;
     const MAX_BUFFER_CACHE_ITEMS = 96;
+    const WORD_MELODY_GAP_SEC = 0.018;
+    const WORD_MELODY_TRIM_THRESHOLD = 0.006;
+    const WORD_MELODY_TRIM_PAD_SEC = 0.012;
     let MELODY_PRESETS = {
         fantastic_minor: { mode: 'word', scale: 'minor', root: 0, pattern: '0 2 4 2 -1 0 -3 -1', bpm: 92, depth: 115, glide: 0.06 },
         minor_descent: { mode: 'word', scale: 'minor', root: 0, pattern: '6 5 4 2 1 0 -2 -1', bpm: 78, depth: 125, glide: 0.075 },
@@ -299,6 +302,42 @@
         return Math.max(0.125, Math.min(8, Math.pow(2, cents / 1200)));
     }
 
+    function trimSilenceFromBuffer(buffer, ctx) {
+        const padFrames = Math.floor(buffer.sampleRate * WORD_MELODY_TRIM_PAD_SEC);
+        let first = -1;
+        let last = -1;
+
+        for (let i = 0; i < buffer.length; i++) {
+            for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
+                if (Math.abs(buffer.getChannelData(ch)[i]) > WORD_MELODY_TRIM_THRESHOLD) {
+                    first = Math.max(0, i - padFrames);
+                    break;
+                }
+            }
+            if (first !== -1) break;
+        }
+
+        if (first === -1) return buffer;
+
+        for (let i = buffer.length - 1; i >= first; i--) {
+            for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
+                if (Math.abs(buffer.getChannelData(ch)[i]) > WORD_MELODY_TRIM_THRESHOLD) {
+                    last = Math.min(buffer.length, i + padFrames + 1);
+                    break;
+                }
+            }
+            if (last !== -1) break;
+        }
+
+        if (first === 0 && last === buffer.length) return buffer;
+
+        const trimmed = ctx.createBuffer(buffer.numberOfChannels, Math.max(1, last - first), buffer.sampleRate);
+        for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
+            trimmed.copyToChannel(buffer.getChannelData(ch).subarray(first, last), ch);
+        }
+        return trimmed;
+    }
+
     async function synthesizeWordMelody(chId, text, params) {
         const ch = chMgr.channels.get(chId); if (!ch) return;
         const words = splitWordsForMelody(text);
@@ -306,11 +345,11 @@
 
         const buffers = [];
         for (const word of words) {
-            buffers.push(await getCachedBuffer(word, ch.engine, params));
+            const buffer = await getCachedBuffer(word, ch.engine, params);
+            buffers.push(trimSilenceFromBuffer(buffer, ch.audioEngine.ctx));
         }
 
         const startAt = ch.audioEngine.ctx.currentTime + 0.05;
-        const stepSec = Math.max(0.08, 60 / ch.melody.bpm);
         let offset = 0;
         const noteCents = words.map((_, i) => ch.audioEngine.getMelodyCents(i));
 
@@ -332,7 +371,7 @@
                 applyMelody: false,
                 enforceLimit: false
             });
-            offset += Math.max(buffer.duration / pitchRate + 0.035, stepSec);
+            offset += Math.max(0.04, buffer.duration / pitchRate) + WORD_MELODY_GAP_SEC;
         });
     }
 
