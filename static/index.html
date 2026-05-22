@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="TEXT2SYNTH — Retro terminal text-to-speech synthesizer with delay, LFO, filter, and drone effects">
+    <title>TEXT2SYNTH — Terminal Voice Synthesizer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="crt-overlay" aria-hidden="true"></div>
+    <div class="app-container">
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="header-buttons">
+                    <button class="term-btn" id="btn-info" title="About">?</button>
+                    <button class="term-btn" id="btn-sidebar-close" title="Hide sidebar">✕</button>
+                </div>
+                <h1 class="logo">TEXT2SYNTH</h1>
+                <div class="logo-sub">VOICE TERMINAL v1.1</div>
+            </div>
+            <div class="sidebar-scroll">
+
+                <!-- ENGINE -->
+                <section class="ctrl-section">
+                    <div class="section-title">═══ ENGINE ═══</div>
+                    <div class="radio-group" id="engine-select">
+                        <label class="radio-label">
+                            <input type="radio" name="engine" value="sam" checked>
+                            <span class="radio-indicator"></span>
+                            SAM (1982 RETRO)
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="engine" value="say">
+                            <span class="radio-indicator"></span>
+                            MACOS SAY
+                        </label>
+                    </div>
+
+                    <!-- SAM controls -->
+                    <div class="engine-params" id="sam-params">
+                        <div class="param-row">
+                            <label for="sam-preset">PRESET:</label>
+                            <select id="sam-preset" class="term-select">
+                                <option value="default">SAM DEFAULT</option>
+                                <option value="robot">LITTLE ROBOT</option>
+                                <option value="elf">ELF</option>
+                                <option value="old_robot">OLD ROBOT</option>
+                                <option value="stuffy">STUFFY</option>
+                                <option value="creepy" selected>I FEEL FANTASTIC</option>
+                            </select>
+                        </div>
+                        <div class="param-row">
+                            <label for="sam-speed">SPEED:</label>
+                            <input type="range" id="sam-speed" min="1" max="255" value="60" class="term-slider">
+                            <span class="slider-val" id="sam-speed-val">60</span>
+                        </div>
+                        <div class="param-row">
+                            <label for="sam-pitch">PITCH:</label>
+                            <input type="range" id="sam-pitch" min="1" max="255" value="40" class="term-slider">
+                            <span class="slider-val" id="sam-pitch-val">40</span>
+                        </div>
+                        <div class="param-row">
+                            <label for="sam-mouth">MOUTH:</label>
+                            <input type="range" id="sam-mouth" min="1" max="255" value="150" class="term-slider">
+                            <span class="slider-val" id="sam-mouth-val">150</span>
+                        </div>
+                        <div class="param-row">
+                            <label for="sam-throat">THROAT:</label>
+                            <input type="range" id="sam-throat" min="1" max="255" value="200" class="term-slider">
+                            <span class="slider-val" id="sam-throat-val">200</span>
+                        </div>
+                    </div>
+
+                    <!-- macOS Say controls -->
+                    <div class="engine-params hidden" id="say-params">
+                        <div class="param-row">
+                            <label for="say-voice">VOICE:</label>
+                            <select id="say-voice" class="term-select">
+                                <option value="Alex">ALEX (EN)</option>
+                                <option value="Samantha">SAMANTHA (EN)</option>
+                                <option value="Fred">FRED (EN)</option>
+                                <option value="Monica">MONICA (ES)</option>
+                                <option value="Paulina">PAULINA (ES)</option>
+                                <option value="Jorge">JORGE (ES)</option>
+                            </select>
+                        </div>
+                        <div class="param-row">
+                            <label for="say-rate">RATE:</label>
+                            <input type="range" id="say-rate" min="50" max="400" value="175" class="term-slider">
+                            <span class="slider-val" id="say-rate-val">175</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- CHANNEL -->
+                <section class="ctrl-section">
+                    <div class="section-title">═══ CHANNEL ═══</div>
+                    <div class="param-row">
+                        <label for="channel-volume">CH VOL:</label>
+                        <input type="range" id="channel-volume" min="0" max="1.5" value="0.8" class="term-slider" step="0.01">
+                        <span class="slider-val" id="channel-volume-val">0.80</span>
+                    </div>
+                </section>
+
+                <!-- SING MODE -->
+                <section class="ctrl-section">
+                    <div class="section-title">═══ SING ═══</div>
+                    <div class="param-row">
+                        <label for="sing-enabled" class="toggle-label">
+                            <input type="checkbox" id="sing-enabled">
+                            <span class="toggle-indicator"></span>
+                            I FEEL FANTASTIC
+                        </label>
+                    </div>
+                    <div class="param-row">
+                        <label for="sing-pitch">PITCH:</label>
+                        <input type="range" id="sing-pitch" min="-1200" max="1200" value="-200" class="term-slider" step="10">
+                        <span class="slider-val" id="sing-pitch-val">-200</span>
+                    </div>
+                    <div class="param-row">
+                        <label for="sing-wobble-rate">WOBBLE:</label>
+                        <input type="range" id="sing-wobble-rate" min="0.1" max="12" value="3" class="term-slider" step="0.1">
+                        <span class="slider-val" id="sing-wobble-rate-val">3.0</span>
+                    </div>
+                    <div class="param-row">
+                        <label for="sing-wobble-depth">DEPTH:</label>
+                        <input type="range" id="sing-wobble-depth" min="0" max="600" value="150" class="term-slider" step="5">
+                        <span class="slider-val" id="sing-wobble-depth-val">150</span>
+                    </div>
+                    <div class="param-row">
+                        <label for="sing-wobble-wave">WAVE:</label>
+                        <select id="sing-wobble-wave" class="term-select">
+                            <option value="sine" selected>SINE</option>
+                            <option value="triangle">TRIANGLE</option>
+                            <option value="square">SQUARE</option>
+                            <option value="sawtooth">SAWTOOTH</option>
+                        </select>
+                    </div>
+                </section>
+
+                <!-- VOICE MELODY -->
+                <section class="ctrl-section">
+                    <div class="section-title">═══ VOICE MELODY ═══</div>
+                    <div class="param-row">
+                        <label for="melody-enabled" class="toggle-label">
+                            <input type="checkbox" id="melody-enabled">
+                            <span class="toggle-indicator"></span>
+                            FOLLOW NOTES
+                        </label>
+                    </div>
+                    <div class="param-row">
+                        <label for="melody-preset">PRESET:</label>
+                        <select id="melody-preset" class="term-select">
+                            <option value="fantastic_minor">FANTASTIC MINOR</option>
+                            <option value="minor_descent">MINOR DESCENT</option>
+                            <option value="major_rise">MAJOR RISE</option>
+                            <option value="pentatonic">PENTATONIC</option>
+                            <option value="tritone">TRITONE</option>
+                            <option value="custom">CUSTOM</option>
+                        </select>
+                    </div>
+                    <div class="param-row">
+                        <label for="melody-mode">MODE:</label>
+                        <select id="melody-mode" class="term-select">
+                            <option value="word" selected>WORD NOTES</option>
+                            <option value="phrase">PHRASE BEND</option>
+                        </select>
+                    </div>
+                    <div class="param-row">
+                        <label for="melody-scale">SCALE:</label>
+                        <select id="melody-scale" class="term-select">
+                            <option value="minor" selected>MINOR</option>
+                            <option value="major">MAJOR</option>
+                            <option value="harmonic_minor">HARM MINOR</option>
+                            <option value="pentatonic_minor">PENT MINOR</option>
+                            <option value="chromatic">CHROMATIC</option>
+                            <option value="whole">WHOLE TONE</option>
+                        </select>
+                    </div>
+                    <div class="param-row">
+                        <label for="melody-root">ROOT:</label>
+                        <select id="melody-root" class="term-select">
+                            <option value="0" selected>C</option>
+                            <option value="1">C#</option>
+                            <option value="2">D</option>
+                            <option value="3">D#</option>
+                            <option value="4">E</option>
+                            <option value="5">F</option>
+                            <option value="6">F#</option>
+                            <option value="7">G</option>
+                            <option value="8">G#</option>
+                            <option value="9">A</option>
+                            <option value="10">A#</option>
+                            <option value="11">B</option>
+                        </select>
+                    </div>
+                    <div class="param-row">
+                        <label for="melody-pattern">STEPS:</label>
+                        <input type="text" id="melody-pattern" class="term-text" value="0 2 4 2 -1 0 -3 -1" autocomplete="off" spellcheck="false">
+                    </div>
+                    <div class="param-row">
+                        <label for="melody-bpm">BPM:</label>
+                        <input type="range" id="melody-bpm" min="30" max="240" value="92" class="term-slider" step="1">
+                        <span class="slider-val" id="melody-bpm-val">92</span>
+                    </div>
+                    <div class="param-row">
+                        <label for="melody-depth">RANGE:</label>
+                        <input type="range" id="melody-depth" min="25" max="200" value="115" class="term-slider" step="5">
+                        <span class="slider-val" id="melody-depth-val">115</span>
+                    </div>
+                    <div class="param-row">
+                        <label for="melody-glide">GLIDE:</label>
+                        <input type="range" id="melody-glide" min="0" max="0.2" value="0.06" class="term-slider" step="0.005">
+                        <span class="slider-val" id="melody-glide-val">0.060</span>
+                    </div>
+                    <div class="param-row">
+                        <label for="melody-loop" class="toggle-label">
+                            <input type="checkbox" id="melody-loop" checked>
+                            <span class="toggle-indicator"></span>
+                            REPEAT STEPS
+                        </label>
+                    </div>
+                </section>
+
+                <!-- LOOP -->
+                <section class="ctrl-section">
+                    <div class="section-title">═══ LOOP ═══</div>
+                    <div class="param-row">
+                        <label for="loop-enabled" class="toggle-label">
+                            <input type="checkbox" id="loop-enabled">
+                            <span class="toggle-indicator"></span>
+                            AUTO-REPEAT
+                        </label>
+                    </div>
+                    <div class="param-row">
+                        <label for="loop-mode">MODE:</label>
+                        <select id="loop-mode" class="term-select">
+                            <option value="secs">SECONDS</option>
+                            <option value="bpm">BPM</option>
+                        </select>
+                    </div>
+                    <div class="param-row" id="loop-secs-row">
+                        <label for="loop-interval">SECS:</label>
+                        <input type="range" id="loop-interval" min="1" max="30" value="5" class="term-slider" step="0.5">
+                        <span class="slider-val" id="loop-interval-val">5.0</span>
+                    </div>
+                    <div class="param-row hidden" id="loop-bpm-row">
+                        <label for="loop-bpm">BPM:</label>
+                        <input type="range" id="loop-bpm" min="20" max="300" value="120" class="term-slider" step="1">
+                        <span class="slider-val" id="loop-bpm-val">120</span>
+                    </div>
+                    <div class="param-row">
+                        <label for="loop-cycle" class="toggle-label">
+                            <input type="checkbox" id="loop-cycle">
+                            <span class="toggle-indicator"></span>
+                            CYCLE VOICES
+                        </label>
+                    </div>
+                </section>
+
+                <!-- FILTER -->
+                <section class="ctrl-section">
+                    <div class="section-title">═══ FILTER ═══</div>
+                    <div class="param-row">
+                        <label for="filter-type">TYPE:</label>
+                        <select id="filter-type" class="term-select">
+                            <option value="lowpass">LOWPASS</option>
+                            <option value="highpass">HIGHPASS</option>
+                            <option value="bandpass">BANDPASS</option>
+                            <option value="notch">NOTCH</option>
+                        </select>
+                    </div>
+                    <div class="param-row">
+                        <label for="filter-cutoff">CUTOFF:</label>
+                        <input type="range" id="filter-cutoff" min="20" max="20000" value="8000" class="term-slider" step="10">
+                        <span class="slider-val" id="filter-cutoff-val">8000</span>
+                    </div>
+                    <div class="param-row">
+                        <label for="filter-resonance">RES:</label>
+                        <input type="range" id="filter-resonance" min="0" max="30" value="1" class="term-slider" step="0.1">
+                        <span class="slider-val" id="filter-resonance-val">1.0</span>
+                    </div>
+                </section>
+
+                <!-- LFO -->
+                <section class="ctrl-section">
+                    <div class="section-title">═══ LFO ═══</div>
+                    <div class="param-row">
+                        <label for="lfo-enabled" class="toggle-label">
+                            <input type="checkbox" id="lfo-enabled">
+                            <span class="toggle-indicator"></span>
+                            ACTIVE
+                        </label>
+                    </div>
+                    <div class="param-row">
+                        <label for="lfo-rate">RATE:</label>
+                        <input type="range" id="lfo-rate" min="0.01" max="20" value="2" class="term-slider" step="0.01">
+                        <span class="slider-val" id="lfo-rate-val">2.00</span>
+                    </div>
+                    <div class="param-row">
+                        <label for="lfo-depth">DEPTH:</label>
+                        <input type="range" id="lfo-depth" min="0" max="4000" value="500" class="term-slider" step="10">
+                        <span class="slider-val" id="lfo-depth-val">500</span>
+                    </div>
+                    <div class="param-row">
+                        <label for="lfo-wave">WAVE:</label>
+                        <select id="lfo-wave" class="term-select">
+                            <option value="sine">SINE</option>
+                            <option value="triangle">TRIANGLE</option>
+                            <option value="square">SQUARE</option>
+                            <option value="sawtooth">SAWTOOTH</option>
+                        </select>
+                    </div>
+                    <div class="param-row">
+                        <label for="lfo-target">TARGET:</label>
+                        <select id="lfo-target" class="term-select">
+                            <option value="filter">FILTER CUTOFF</option>
+                            <option value="delay">DELAY TIME</option>
+                            <option value="frequency">DRONE FREQ</option>
+                        </select>
+                    </div>
+                </section>
+
+                <!-- DELAY -->
+                <section class="ctrl-section">
+                    <div class="section-title">═══ DELAY ═══</div>
+                    <div class="param-row">
+                        <label for="delay-enabled" class="toggle-label">
+                            <input type="checkbox" id="delay-enabled">
+                            <span class="toggle-indicator"></span>
+                            ACTIVE
+                        </label>
+                    </div>
+                    <div class="param-row">
+                        <label for="delay-time">TIME:</label>
+                        <input type="range" id="delay-time" min="0" max="2" value="0.3" class="term-slider" step="0.01">
+                        <span class="slider-val" id="delay-time-val">0.30</span>
+                    </div>
+                    <div class="param-row">
+                        <label for="delay-feedback">FDBK:</label>
+                        <input type="range" id="delay-feedback" min="0" max="0.95" value="0.4" class="term-slider" step="0.01">
+                        <span class="slider-val" id="delay-feedback-val">0.40</span>
+                    </div>
+                    <div class="param-row">
+                        <label for="delay-mix">MIX:</label>
+                        <input type="range" id="delay-mix" min="0" max="1" value="0.3" class="term-slider" step="0.01">
+                        <span class="slider-val" id="delay-mix-val">0.30</span>
+                    </div>
+                </section>
+
+                <!-- DRONE -->
+                <section class="ctrl-section">
+                    <div class="section-title">═══ DRONE ═══</div>
+                    <div class="param-row">
+                        <label for="drone-enabled" class="toggle-label">
+                            <input type="checkbox" id="drone-enabled">
+                            <span class="toggle-indicator"></span>
+                            ACTIVE
+                        </label>
+                    </div>
+                    <div class="param-row">
+                        <label for="drone-wave">WAVE:</label>
+                        <select id="drone-wave" class="term-select">
+                            <option value="sawtooth">SAWTOOTH</option>
+                            <option value="sine">SINE</option>
+                            <option value="square">SQUARE</option>
+                            <option value="triangle">TRIANGLE</option>
+                        </select>
+                    </div>
+                    <div class="param-row">
+                        <label for="drone-note">NOTE:</label>
+                        <select id="drone-note" class="term-select">
+                            <option value="32.70">C1</option>
+                            <option value="36.71">D1</option>
+                            <option value="41.20">E1</option>
+                            <option value="43.65">F1</option>
+                            <option value="49.00">G1</option>
+                            <option value="55.00" selected>A1</option>
+                            <option value="61.74">B1</option>
+                            <option value="65.41">C2</option>
+                            <option value="73.42">D2</option>
+                            <option value="82.41">E2</option>
+                            <option value="87.31">F2</option>
+                            <option value="98.00">G2</option>
+                            <option value="110.00">A2</option>
+                            <option value="123.47">B2</option>
+                            <option value="130.81">C3</option>
+                            <option value="146.83">D3</option>
+                            <option value="164.81">E3</option>
+                            <option value="174.61">F3</option>
+                            <option value="196.00">G3</option>
+                            <option value="220.00">A3</option>
+                            <option value="246.94">B3</option>
+                        </select>
+                    </div>
+                    <div class="param-row">
+                        <label for="drone-freq">FREQ:</label>
+                        <input type="range" id="drone-freq" min="20" max="500" value="55" class="term-slider" step="0.1">
+                        <span class="slider-val" id="drone-freq-val">55.0</span>
+                    </div>
+                    <div class="param-row">
+                        <label for="drone-detune">DETUNE:</label>
+                        <input type="range" id="drone-detune" min="0" max="50" value="5" class="term-slider" step="0.1">
+                        <span class="slider-val" id="drone-detune-val">5.0</span>
+                    </div>
+                    <div class="param-row">
+                        <label for="drone-voices">VOICES:</label>
+                        <select id="drone-voices" class="term-select">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3" selected>3</option>
+                        </select>
+                    </div>
+                    <div class="param-row">
+                        <label for="drone-volume">VOL:</label>
+                        <input type="range" id="drone-volume" min="0" max="1" value="0.15" class="term-slider" step="0.01">
+                        <span class="slider-val" id="drone-volume-val">0.15</span>
+                    </div>
+                </section>
+
+            </div>
+        </aside>
+
+        <!-- TERMINAL AREA -->
+        <main class="terminal-area" id="terminal-area">
+            <button class="term-btn sidebar-open-btn" id="btn-sidebar-open" title="Show sidebar">☰</button>
+            
+            <!-- Channel bar -->
+            <div class="channel-bar" id="channel-bar">
+                <div class="channel-tabs" id="channel-tabs">
+                    <!-- Tabs dynamically created by app.js -->
+                </div>
+                <button class="term-btn channel-add-btn" id="btn-add-channel" title="Add channel (max 4)">+</button>
+            </div>
+
+            <!-- Channel grid — channels are added dynamically -->
+            <div class="channel-grid" id="channel-grid">
+                <!-- Channel panels created by app.js -->
+            </div>
+        </main>
+
+        <!-- INFO MODAL -->
+        <div class="info-overlay hidden" id="info-overlay">
+            <div class="info-modal">
+                <button class="term-btn info-close" id="btn-info-close">✕</button>
+                <div class="info-content">
+                    <div class="info-title">TEXT2SYNTH</div>
+                    <div class="info-sep">═══════════════════════════</div>
+                    <p>Retro terminal text-to-speech synthesizer inspired by the "I Feel Fantastic" video and 1980s speech synthesis technology.</p>
+                    <p>Combines two TTS engines — SAM (Software Automatic Mouth, 1982) and macOS system voices — with a real-time Web Audio effects chain: filter, LFO, delay, drone, and a "sing mode" that recreates the eerie tonal quality of early robotic speech.</p>
+                    <p>Type text, press Enter, twist the knobs.</p>
+                    <div class="info-sep">───────────────────────────</div>
+                    <p>ENGINES: SAM 1982 · macOS Say</p>
+                    <p>EFFECTS: Filter · LFO · Delay · Drone</p>
+                    <p>MODES: Sing · Loop · Voice Cycling</p>
+                    <div class="info-sep">───────────────────────────</div>
+                    <p><a href="https://github.com/vlasvlasvlas/text2synth" target="_blank" rel="noopener">github.com/vlasvlasvlas/text2synth</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="audio-engine.js"></script>
+    <script src="tts-client.js"></script>
+    <script src="channel-manager.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

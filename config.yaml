@@ -1,0 +1,210 @@
+# ═══════════════════════════════════════════════════════════
+# TEXT2SYNTH — Voice & Preset Configuration
+# ═══════════════════════════════════════════════════════════
+# Edit this file to add/remove/modify voice presets.
+# API changes reload on each request. Frontend defaults are loaded on page refresh.
+
+# SAM Engine (Software Automatic Mouth, 1982)
+# Parameters: speed (1-255), pitch (1-255), mouth (1-255), throat (1-255)
+sam_presets:
+  - id: default
+    name: SAM Default
+    speed: 72
+    pitch: 64
+    mouth: 128
+    throat: 128
+
+  - id: robot
+    name: Little Robot
+    speed: 92
+    pitch: 60
+    mouth: 190
+    throat: 190
+
+  - id: elf
+    name: Elf
+    speed: 72
+    pitch: 64
+    mouth: 110
+    throat: 160
+
+  - id: old_robot
+    name: Old Robot
+    speed: 82
+    pitch: 72
+    mouth: 130
+    throat: 100
+
+  - id: stuffy
+    name: Stuffy
+    speed: 82
+    pitch: 72
+    mouth: 110
+    throat: 105
+
+  - id: creepy
+    name: I Feel Fantastic
+    speed: 60
+    pitch: 40
+    mouth: 150
+    throat: 200
+
+  - id: whisperer
+    name: Whisperer
+    speed: 40
+    pitch: 30
+    mouth: 100
+    throat: 220
+
+  - id: chipmunk
+    name: Chipmunk
+    speed: 120
+    pitch: 200
+    mouth: 200
+    throat: 80
+
+  - id: demon
+    name: Demon
+    speed: 50
+    pitch: 15
+    mouth: 255
+    throat: 255
+
+  - id: radio
+    name: Radio Operator
+    speed: 100
+    pitch: 80
+    mouth: 128
+    throat: 128
+
+# macOS Say Engine — Preferred voices
+# These are pre-loaded in the dropdown. All system voices are
+# also auto-detected and added at startup.
+say_preferred_voices:
+  - Alex
+  - Samantha
+  - Fred
+  - Victoria
+  - Monica
+  - Paulina
+  - Jorge
+  - Daniel
+  - Karen
+  - Tessa
+
+# Voice Melody presets
+# mode: word = synthesize and pitch each word; phrase = bend one full phrase buffer
+# scale: major, minor, harmonic_minor, pentatonic_minor, chromatic, whole
+# root: semitone offset from C (C=0, C#=1, D=2, ... B=11)
+# pattern: scale degrees for major/minor/etc, or note names such as C3 D3 Eb3 G3
+# bpm: note step rate
+# depth: percent multiplier for interval size
+# glide: pitch smoothing time in seconds
+melody_presets:
+  - id: fantastic_minor
+    name: Fantastic Minor
+    mode: word
+    scale: minor
+    root: 0
+    pattern: "0 2 4 2 -1 0 -3 -1"
+    bpm: 92
+    depth: 115
+    glide: 0.06
+
+  - id: minor_descent
+    name: Minor Descent
+    mode: word
+    scale: minor
+    root: 0
+    pattern: "6 5 4 2 1 0 -2 -1"
+    bpm: 78
+    depth: 125
+    glide: 0.075
+
+  - id: major_rise
+    name: Major Rise
+    mode: word
+    scale: major
+    root: 0
+    pattern: "0 1 2 4 5 4 2 1"
+    bpm: 110
+    depth: 95
+    glide: 0.035
+
+  - id: pentatonic
+    name: Pentatonic
+    mode: word
+    scale: pentatonic_minor
+    root: 0
+    pattern: "0 1 2 3 2 1 0 -1"
+    bpm: 104
+    depth: 105
+    glide: 0.045
+
+  - id: tritone
+    name: Tritone
+    mode: word
+    scale: chromatic
+    root: 0
+    pattern: "0 3 6 5 3 0 -2 1"
+    bpm: 88
+    depth: 135
+    glide: 0.08
+
+# Default effects configuration
+defaults:
+  engine: sam
+  preset: creepy
+  default_phrase: "I FEEL FANTASTIC. ESCRIBE Y CANTO Y LOOPEO."
+  volume: 0.8
+
+  filter:
+    type: lowpass
+    cutoff: 8000
+    resonance: 1.0
+
+  delay:
+    enabled: false
+    time: 0.3
+    feedback: 0.4
+    mix: 0.3
+
+  lfo:
+    enabled: false
+    rate: 2.0
+    depth: 500
+    wave: sine
+    target: filter
+
+  drone:
+    enabled: false
+    wave: sawtooth
+    freq: 55.0
+    detune: 5.0
+    voices: 3
+    volume: 0.15
+
+  sing:
+    enabled: false
+    pitch: -200
+    wobble_rate: 3.0
+    wobble_depth: 150
+    wobble_wave: sine
+
+  melody:
+    enabled: false
+    preset: fantastic_minor
+    mode: word
+    scale: minor
+    root: 0
+    pattern: "0 2 4 2 -1 0 -3 -1"
+    bpm: 92
+    depth: 115
+    glide: 0.06
+    loop: true
+
+  loop:
+    mode: secs
+    interval: 5.0
+    bpm: 120
+    cycle_voices: false
