@@ -107,22 +107,26 @@
                     </div>
                 </section>
 
+                <div class="signal-map">
+                    <span>VOICE</span><span>→</span><span>MELODY</span><span>→</span><span>FX</span><span>→</span><span>LOOP</span>
+                </div>
+
                 <!-- PITCH FX -->
-                <section class="ctrl-section ctrl-section-help">
-                    <div class="section-title">═══ PITCH FX ═══</div>
-                    <div class="ctrl-hint">
-                        <span class="hint-tag">NO NOTES</span>
-                        Static pitch offset plus LFO wobble. Creepy drift, not a melody.
-                    </div>
+                <details class="ctrl-section ctrl-details" id="pitch-fx-details">
+                    <summary class="details-title">
+                        ═══ BASE PITCH / WOBBLE ═══
+                        <span class="summary-tag">ADV</span>
+                    </summary>
+                    <div class="ctrl-hint">Optional transpose/vibrato. This does not choose notes.</div>
                     <div class="param-row">
                         <label for="sing-enabled" class="toggle-label">
                             <input type="checkbox" id="sing-enabled">
                             <span class="toggle-indicator"></span>
-                            ENABLE PITCH FX
+                            ENABLE WOBBLE
                         </label>
                     </div>
                     <div class="param-row">
-                        <label for="sing-pitch">PITCH:</label>
+                        <label for="sing-pitch">SHIFT:</label>
                         <input type="range" id="sing-pitch" min="-1200" max="1200" value="-200" class="term-slider" step="10">
                         <span class="slider-val" id="sing-pitch-val">-200</span>
                     </div>
@@ -145,20 +149,17 @@
                             <option value="sawtooth">SAWTOOTH</option>
                         </select>
                     </div>
-                </section>
+                </details>
 
                 <!-- VOICE MELODY -->
                 <section class="ctrl-section ctrl-section-help melody-section">
-                    <div class="section-title">═══ MELODY NOTES ═══</div>
-                    <div class="ctrl-hint">
-                        <span class="hint-tag">ACTUAL NOTES</span>
-                        Assigns note steps to words or bends the phrase through a scale.
-                    </div>
+                    <div class="section-title">═══ MELODY ═══</div>
+                    <div class="ctrl-hint"><span class="hint-tag">NOTES</span> This is the only section that makes the voice follow a note pattern.</div>
                     <div class="param-row">
                         <label for="melody-enabled" class="toggle-label">
                             <input type="checkbox" id="melody-enabled">
                             <span class="toggle-indicator"></span>
-                            FOLLOW NOTE PATTERN
+                            ENABLE MELODY
                         </label>
                     </div>
                     <div class="param-row">
@@ -176,14 +177,12 @@
                     <div class="param-row">
                         <label for="melody-mode">MODE:</label>
                         <select id="melody-mode" class="term-select">
-                            <option value="word" selected>WORD NOTES</option>
-                            <option value="phrase">PHRASE BEND</option>
+                            <option value="word" selected>NOTES PER WORD</option>
+                            <option value="phrase">BEND WHOLE PHRASE</option>
                         </select>
                     </div>
                     <div class="mode-help">
-                        <span>WORD NOTES = one note per word.</span>
-                        <span>PHRASE BEND = one phrase, moving pitch curve.</span>
-                        <span>BPM drives phrase bend; word notes keep natural spacing.</span>
+                        WORD = note per word. PHRASE = one pitch curve. BPM affects phrase mode.
                     </div>
                     <div class="param-row">
                         <label for="melody-scale">SCALE:</label>
@@ -218,27 +217,30 @@
                         <input type="text" id="melody-pattern" class="term-text" value="0 2 4 2 -1 0 -3 -1" autocomplete="off" spellcheck="false">
                     </div>
                     <div class="param-row">
-                        <label for="melody-bpm">BPM:</label>
-                        <input type="range" id="melody-bpm" min="30" max="240" value="92" class="term-slider" step="1">
-                        <span class="slider-val" id="melody-bpm-val">92</span>
-                    </div>
-                    <div class="param-row">
                         <label for="melody-depth">RANGE:</label>
                         <input type="range" id="melody-depth" min="25" max="200" value="115" class="term-slider" step="5">
                         <span class="slider-val" id="melody-depth-val">115</span>
                     </div>
-                    <div class="param-row">
-                        <label for="melody-glide">GLIDE:</label>
-                        <input type="range" id="melody-glide" min="0" max="0.2" value="0.06" class="term-slider" step="0.005">
-                        <span class="slider-val" id="melody-glide-val">0.060</span>
-                    </div>
-                    <div class="param-row">
-                        <label for="melody-loop" class="toggle-label">
-                            <input type="checkbox" id="melody-loop" checked>
-                            <span class="toggle-indicator"></span>
-                            REPEAT STEPS
-                        </label>
-                    </div>
+                    <details class="mini-details" id="melody-timing-details">
+                        <summary class="mini-summary">TIMING / ADVANCED</summary>
+                        <div class="param-row">
+                            <label for="melody-bpm">BPM:</label>
+                            <input type="range" id="melody-bpm" min="30" max="240" value="92" class="term-slider" step="1">
+                            <span class="slider-val" id="melody-bpm-val">92</span>
+                        </div>
+                        <div class="param-row">
+                            <label for="melody-glide">GLIDE:</label>
+                            <input type="range" id="melody-glide" min="0" max="0.2" value="0.06" class="term-slider" step="0.005">
+                            <span class="slider-val" id="melody-glide-val">0.060</span>
+                        </div>
+                        <div class="param-row">
+                            <label for="melody-loop" class="toggle-label">
+                                <input type="checkbox" id="melody-loop" checked>
+                                <span class="toggle-indicator"></span>
+                                REPEAT STEPS
+                            </label>
+                        </div>
+                    </details>
                 </section>
 
                 <!-- LOOP -->
@@ -277,8 +279,15 @@
                     </div>
                 </section>
 
+                <!-- ADVANCED FX -->
+                <details class="ctrl-section ctrl-details" id="advanced-fx-details">
+                    <summary class="details-title">
+                        ═══ ADVANCED FX ═══
+                        <span class="summary-tag">FILTER/LFO/DELAY/DRONE</span>
+                    </summary>
+
                 <!-- FILTER -->
-                <section class="ctrl-section">
+                <section class="ctrl-section nested-section">
                     <div class="section-title">═══ FILTER ═══</div>
                     <div class="param-row">
                         <label for="filter-type">TYPE:</label>
@@ -302,7 +311,7 @@
                 </section>
 
                 <!-- LFO -->
-                <section class="ctrl-section">
+                <section class="ctrl-section nested-section">
                     <div class="section-title">═══ LFO ═══</div>
                     <div class="param-row">
                         <label for="lfo-enabled" class="toggle-label">
@@ -341,7 +350,7 @@
                 </section>
 
                 <!-- DELAY -->
-                <section class="ctrl-section">
+                <section class="ctrl-section nested-section">
                     <div class="section-title">═══ DELAY ═══</div>
                     <div class="param-row">
                         <label for="delay-enabled" class="toggle-label">
@@ -368,7 +377,7 @@
                 </section>
 
                 <!-- DRONE -->
-                <section class="ctrl-section">
+                <section class="ctrl-section nested-section">
                     <div class="section-title">═══ DRONE ═══</div>
                     <div class="param-row">
                         <label for="drone-enabled" class="toggle-label">
@@ -437,6 +446,8 @@
                     </div>
                 </section>
 
+                </details>
+
             </div>
         </aside>
 
@@ -466,12 +477,12 @@
                     <div class="info-title">TEXT2SYNTH</div>
                     <div class="info-sep">═══════════════════════════</div>
                     <p>Retro terminal text-to-speech synthesizer inspired by the "I Feel Fantastic" video and 1980s speech synthesis technology.</p>
-                    <p>Combines two TTS engines — SAM (Software Automatic Mouth, 1982) and macOS system voices — with a real-time Web Audio effects chain: filter, LFO, delay, drone, and a "sing mode" that recreates the eerie tonal quality of early robotic speech.</p>
+                    <p>Combines two TTS engines — SAM (Software Automatic Mouth, 1982) and macOS system voices — with melody controls plus a real-time Web Audio effects chain: base pitch/wobble, filter, LFO, delay, and drone.</p>
                     <p>Type text, press Enter, twist the knobs.</p>
                     <div class="info-sep">───────────────────────────</div>
                     <p>ENGINES: SAM 1982 · macOS Say</p>
                     <p>EFFECTS: Filter · LFO · Delay · Drone</p>
-                    <p>MODES: Sing · Loop · Voice Cycling</p>
+                    <p>MODES: Melody · Loop · Voice Cycling</p>
                     <div class="info-sep">───────────────────────────</div>
                     <p><a href="https://github.com/vlasvlasvlas/text2synth" target="_blank" rel="noopener">github.com/vlasvlasvlas/text2synth</a></p>
                 </div>

@@ -6,6 +6,9 @@
     const tts = window.ttsClient;
     const chMgr = window.channelManager;
     const sidebar = document.getElementById('sidebar');
+    const pitchFxDetails = document.getElementById('pitch-fx-details');
+    const melodyTimingDetails = document.getElementById('melody-timing-details');
+    const advancedFxDetails = document.getElementById('advanced-fx-details');
 
     // Sidebar DOM refs
     const engineRadios = document.querySelectorAll('input[name="engine"]');
@@ -125,12 +128,14 @@
         singEnabled.checked = ch.sing.enabled; singPitch.value = ch.sing.pitch;
         singWobbleRate.value = ch.sing.wobbleRate; singWobbleDepth.value = ch.sing.wobbleDepth;
         singWobbleWave.value = ch.sing.wobbleWave;
+        if (pitchFxDetails && ch.sing.enabled) pitchFxDetails.open = true;
         // Melody
         melodyEnabled.checked = ch.melody.enabled; melodyMode.value = ch.melody.mode || 'word'; melodyPreset.value = ch.melody.preset;
         melodyScale.value = ch.melody.scale; melodyRoot.value = ch.melody.root;
         melodyPattern.value = ch.melody.pattern; melodyBpm.value = ch.melody.bpm;
         melodyDepth.value = ch.melody.depth; melodyGlide.value = ch.melody.glide;
         melodyLoop.checked = ch.melody.loop;
+        if (melodyTimingDetails && ch.melody.mode === 'phrase') melodyTimingDetails.open = true;
         // Filter
         filterType.value = ch.filter.type; filterCutoff.value = ch.filter.cutoff; filterResonance.value = ch.filter.resonance;
         // Delay
@@ -143,6 +148,7 @@
         droneEnabled.checked = ch.drone.enabled; droneWave.value = ch.drone.wave;
         droneFreq.value = ch.drone.freq; droneDetune.value = ch.drone.detune;
         droneVoices.value = ch.drone.voices; droneVolume.value = ch.drone.volume;
+        if (advancedFxDetails && (ch.delay.enabled || ch.lfo.enabled || ch.drone.enabled)) advancedFxDetails.open = true;
         // Loop
         loopEnabled.checked = ch.loop.enabled; loopMode.value = ch.loop.mode;
         loopInterval.value = ch.loop.interval; loopBpm.value = ch.loop.bpm;
@@ -392,7 +398,8 @@
                 await tts.synthesize(text, ch.engine, params, ch.audioEngine);
             }
             chMgr.removeLine(procLine);
-            const mode = ch.melody.enabled ? ` ${ch.melody.mode.toUpperCase()}-MELODY` : '';
+            const melodyModeLabel = ch.melody.mode === 'phrase' ? 'BEND' : 'NOTES';
+            const mode = ch.melody.enabled ? ` ${melodyModeLabel}-MELODY` : '';
             chMgr.addLine(chId, `[▶ CH${chId} ${ch.engine.toUpperCase()}${mode}]`, 'system');
         } catch (err) {
             chMgr.removeLine(procLine);
@@ -472,6 +479,7 @@
         melodyBpm.value = p.bpm;
         melodyDepth.value = p.depth;
         melodyGlide.value = p.glide;
+        if (melodyTimingDetails && p.mode === 'phrase') melodyTimingDetails.open = true;
         [melodyBpm, melodyDepth, melodyGlide].forEach(s => s.dispatchEvent(new Event('input')));
         applyingMelodyPreset = false;
         onSidebarChange();
@@ -480,6 +488,7 @@
     [melodyMode, melodyScale, melodyRoot, melodyPattern, melodyBpm, melodyDepth, melodyGlide].forEach(el => {
         const evt = el.tagName === 'SELECT' ? 'change' : 'input';
         el.addEventListener(evt, () => {
+            if (el === melodyMode && melodyTimingDetails && melodyMode.value === 'phrase') melodyTimingDetails.open = true;
             if (!applyingMelodyPreset && melodyPreset.value !== 'custom') melodyPreset.value = 'custom';
             onSidebarChange();
         });

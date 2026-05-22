@@ -13,9 +13,9 @@ TEXT2SYNTH turns typed text into voice loops, drones, delay/filter/LFO chains, a
 - SAM 1982-style voice engine via `samtts`.
 - macOS `say` voices when running locally on macOS.
 - Per-channel volume, filter, delay, LFO, drone, sing wobble, and loop state.
-- `VOICE MELODY` modes:
-  - `WORD NOTES`: splits text into words and assigns each word a note from a scale/pattern.
-  - `PHRASE BEND`: bends the whole spoken phrase through the note pattern.
+- `MELODY` modes:
+  - `NOTES PER WORD`: splits text into words and assigns each word a note from a scale/pattern.
+  - `BEND WHOLE PHRASE`: bends the whole spoken phrase through the note pattern.
 - YAML-configured SAM presets, melody presets, and initial defaults.
 
 ## Requirements
@@ -75,33 +75,34 @@ FLASK_DEBUG=1 python server.py
 
 ## Voice Melody
 
-`VOICE MELODY` is the main way to make the voice follow notes instead of only wobbling around one pitch.
+`MELODY` is the main way to make the voice follow notes instead of only wobbling around one pitch.
 
-The sidebar separates two different pitch layers:
+The sidebar keeps the musical path visible and pushes secondary sound design controls into collapsed advanced sections:
 
-- `PITCH FX`: static transpose plus wobble/vibrato. It makes the voice unstable, but it does not choose notes.
-- `MELODY NOTES`: the actual note-following layer. It reads `SCALE`, `ROOT`, and `STEPS` to move words or phrases through a melody.
+- `MELODY`: the actual note-following layer. It reads `SCALE`, `ROOT`, and `STEPS` to move words or phrases through a melody.
+- `BASE PITCH / WOBBLE`: optional transpose plus vibrato. It makes the voice unstable, but it does not choose notes.
+- `ADVANCED FX`: filter, LFO, delay, and drone.
 
 Recommended starting point:
 
 1. Select `SAM (1982 RETRO)`.
 2. Select SAM preset `I FEEL FANTASTIC`.
-3. Enable `PITCH FX -> ENABLE PITCH FX` if you want wobble.
-4. Enable `MELODY NOTES -> FOLLOW NOTE PATTERN`.
-5. Set `MODE` to `WORD NOTES`.
+3. Enable `MELODY -> ENABLE MELODY`.
+4. Set `MODE` to `NOTES PER WORD`.
+5. Open `BASE PITCH / WOBBLE` only if you want extra wobble.
 6. Try presets like `FANTASTIC MINOR`, `MINOR DESCENT`, `TRITONE`, or `OCTAVE TEST`.
 7. Type `I feel fantastic hey hey hey` and press `Enter`.
 
-When `WORD NOTES` runs, the terminal prints a short `NOTES:` trace with the cents applied to the first words. Use `OCTAVE TEST` if you need to confirm the pitch movement audibly; it intentionally uses large jumps.
+When `NOTES PER WORD` runs, the terminal prints a short `NOTES:` trace with the cents applied to the first words. Use `OCTAVE TEST` if you need to confirm the pitch movement audibly; it intentionally uses large jumps.
 
 Controls:
 
 - `PRESET`: loads a configured melody preset.
-- `MODE`: `WORD NOTES` for one note per word, `PHRASE BEND` for pitch automation over the full phrase.
+- `MODE`: `NOTES PER WORD` for one note per word, `BEND WHOLE PHRASE` for pitch automation over the full phrase.
 - `SCALE`: major, minor, harmonic minor, pentatonic minor, chromatic, or whole tone.
 - `ROOT`: transposes the pattern by semitone.
 - `STEPS`: scale degrees or note names.
-- `BPM`: note step rate for `PHRASE BEND`. `WORD NOTES` keeps natural word spacing instead of inserting BPM silence.
+- `BPM`: note step rate for `BEND WHOLE PHRASE`. `NOTES PER WORD` keeps natural word spacing instead of inserting BPM silence.
 - `RANGE`: interval exaggeration. Higher values sound more uncanny.
 - `GLIDE`: pitch smoothing time. Higher values smear notes into each other.
 - `REPEAT STEPS`: loops the note pattern across long phrases.
@@ -298,7 +299,7 @@ Refresh the browser after changing frontend defaults or presets.
 - Prefer adding new presets over changing existing `id` values.
 - Use `word` mode for robotic note-per-word singing.
 - Use `phrase` mode for smoother pitch-bent speech and fewer backend requests.
-- Keep `WORD NOTES` phrases under 32 words for best latency.
+- Keep `NOTES PER WORD` phrases under 32 words for best latency.
 - If loops feel slow the first time, repeat them once; the frontend caches word buffers.
 - For cloud hosting, avoid depending on macOS `say`; SAM works better cross-platform.
 
