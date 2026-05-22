@@ -84,8 +84,10 @@ Recommended starting point:
 3. Enable `SING -> I FEEL FANTASTIC`.
 4. Enable `VOICE MELODY -> FOLLOW NOTES`.
 5. Set `MODE` to `WORD NOTES`.
-6. Try presets like `FANTASTIC MINOR`, `MINOR DESCENT`, or `TRITONE`.
+6. Try presets like `FANTASTIC MINOR`, `MINOR DESCENT`, `TRITONE`, or `OCTAVE TEST`.
 7. Type `I feel fantastic hey hey hey` and press `Enter`.
+
+When `WORD NOTES` runs, the terminal prints a short `NOTES:` trace with the cents applied to the first words. Use `OCTAVE TEST` if you need to confirm the pitch movement audibly; it intentionally uses large jumps.
 
 Controls:
 

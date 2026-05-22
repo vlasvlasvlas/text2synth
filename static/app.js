@@ -71,7 +71,8 @@
         minor_descent: { mode: 'word', scale: 'minor', root: 0, pattern: '6 5 4 2 1 0 -2 -1', bpm: 78, depth: 125, glide: 0.075 },
         major_rise: { mode: 'word', scale: 'major', root: 0, pattern: '0 1 2 4 5 4 2 1', bpm: 110, depth: 95, glide: 0.035 },
         pentatonic: { mode: 'word', scale: 'pentatonic_minor', root: 0, pattern: '0 1 2 3 2 1 0 -1', bpm: 104, depth: 105, glide: 0.045 },
-        tritone: { mode: 'word', scale: 'chromatic', root: 0, pattern: '0 3 6 5 3 0 -2 1', bpm: 88, depth: 135, glide: 0.08 }
+        tritone: { mode: 'word', scale: 'chromatic', root: 0, pattern: '0 3 6 5 3 0 -2 1', bpm: 88, depth: 135, glide: 0.08 },
+        octave_test: { mode: 'word', scale: 'chromatic', root: 0, pattern: '0 7 12 7 0 -5 -12 -5', bpm: 95, depth: 100, glide: 0 }
     };
 
     // ─── Helpers ─────────────────────────────────────────────
@@ -294,6 +295,10 @@
         return buffer;
     }
 
+    function pitchRateFromCents(cents) {
+        return Math.max(0.125, Math.min(8, Math.pow(2, cents / 1200)));
+    }
+
     async function synthesizeWordMelody(chId, text, params) {
         const ch = chMgr.channels.get(chId); if (!ch) return;
         const words = splitWordsForMelody(text);
@@ -307,15 +312,27 @@
         const startAt = ch.audioEngine.ctx.currentTime + 0.05;
         const stepSec = Math.max(0.08, 60 / ch.melody.bpm);
         let offset = 0;
+        const noteCents = words.map((_, i) => ch.audioEngine.getMelodyCents(i));
+
+        if (!ch.loop.enabled) {
+            const trace = words
+                .slice(0, 8)
+                .map((word, i) => `${word}:${Math.round(noteCents[i])}c`)
+                .join(' ');
+            chMgr.addLine(chId, `NOTES: ${trace}`, 'system');
+        }
 
         buffers.forEach((buffer, i) => {
+            const fixedPitchCents = (ch.sing.enabled ? ch.sing.pitch : 0) + noteCents[i];
+            const pitchRate = pitchRateFromCents(fixedPitchCents);
             ch.audioEngine.playBuffer(buffer, {
                 when: startAt + offset,
-                detuneCents: ch.audioEngine.getMelodyCents(i),
+                detuneCents: noteCents[i],
+                pitchMethod: 'rate',
                 applyMelody: false,
                 enforceLimit: false
             });
-            offset += Math.max(buffer.duration + 0.035, stepSec);
+            offset += Math.max(buffer.duration / pitchRate + 0.035, stepSec);
         });
     }
 

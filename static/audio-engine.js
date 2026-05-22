@@ -151,8 +151,15 @@ class ChannelAudioEngine {
         source.buffer = buffer;
         const now = this.ctx.currentTime;
         const startTime = Math.max(now, options.when ?? now);
-        const basePitch = (this.singEnabled ? this.singPitch : 0) + (Number(options.detuneCents) || 0);
+        const fixedPitchCents = (this.singEnabled ? this.singPitch : 0) + (Number(options.detuneCents) || 0);
+        const useRatePitch = options.pitchMethod === 'rate';
+        const basePitch = useRatePitch ? 0 : fixedPitchCents;
         const applyPhraseMelody = options.applyMelody !== false && this.melodyEnabled && this.melodyMode === 'phrase';
+
+        if (useRatePitch) {
+            const rate = Math.max(0.125, Math.min(8, Math.pow(2, fixedPitchCents / 1200)));
+            source.playbackRate.setValueAtTime(rate, startTime);
+        }
 
         source.detune.cancelScheduledValues(now);
         source.detune.setValueAtTime(basePitch, startTime);

@@ -151,6 +151,16 @@ melody_presets:
     depth: 135
     glide: 0.08
 
+  - id: octave_test
+    name: Octave Test
+    mode: word
+    scale: chromatic
+    root: 0
+    pattern: "0 7 12 7 0 -5 -12 -5"
+    bpm: 95
+    depth: 100
+    glide: 0.0
+
 # Default effects configuration
 defaults:
   engine: sam
