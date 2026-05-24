@@ -27,6 +27,34 @@ Actualmente hay **2 motores**:
 - `samtts` (PyPI): [https://pypi.org/project/samtts/](https://pypi.org/project/samtts/)
 - S.A.M. (contexto histórico): [https://en.wikipedia.org/wiki/Software_Automatic_Mouth](https://en.wikipedia.org/wiki/Software_Automatic_Mouth)
 - `say` (Apple): [https://ss64.com/mac/say.html](https://ss64.com/mac/say.html)
+- `pyttsx3` (Python TTS offline): [https://pypi.org/project/pyttsx3/](https://pypi.org/project/pyttsx3/)
+- `eSpeak NG` (motor TTS): [https://github.com/espeak-ng/espeak-ng](https://github.com/espeak-ng/espeak-ng)
+
+## Reemplazo multiplataforma de `say`
+
+Si querés un reemplazo de `say` que sea usable en Linux/Windows/macOS desde Python, la opción más parecida a nivel integración es:
+
+- `pyttsx3` como capa Python.
+- Backend del sistema por OS:
+  - macOS: NSSpeechSynthesizer
+  - Windows: SAPI5
+  - Linux: eSpeak / eSpeak NG
+
+Esto permite mantener un flujo local/offline de TTS similar al modelo de `say` (motor del sistema + selección de voz).
+
+### Recomendación práctica para este proyecto
+
+1. Mantener `sam` como motor retro principal.
+2. Mantener `say` solo para macOS.
+3. Agregar en una próxima iteración un engine `system` o `pyttsx3` para Linux/Windows (y opcionalmente también macOS), para tener un camino multiplataforma único.
+
+### Dependencias sugeridas por OS para ese reemplazo
+
+- Linux (Debian/Ubuntu): `sudo apt install espeak-ng`
+- Windows: usar voces SAPI5 ya instaladas en el sistema.
+- macOS: usar NSSpeechSynthesizer vía `pyttsx3` o seguir con `say`.
+
+Nota: este README deja documentada la alternativa; la implementación en código del engine `pyttsx3/system` todavía no está incluida.
 
 ## Historia y orígenes
 
@@ -234,7 +262,7 @@ Motores históricos que podés evaluar para ampliar el proyecto:
 5. **DECtalk (vías emulación/proyectos comunitarios)**
    - [https://dectalk.github.io/](https://dectalk.github.io/)
 
-Siguiente iteración recomendada: integrar `espeak-ng` como tercer engine (`engine = espeak`) por ser multiplataforma y fácil de automatizar por CLI.
+Siguiente iteración recomendada: integrar `pyttsx3` + `espeak-ng` como engine `system` multiplataforma, y dejar `say` como atajo específico de macOS.
 
 ## Licencia
 
