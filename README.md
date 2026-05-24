@@ -124,6 +124,9 @@ Cómo se interpreta:
   - `2` = subir 2 grados de la escala elegida
   - `-1` = bajar 1 grado
   - Ejemplo `0 2 4 2 -1 0 -3 -1` = sube, vuelve y cae por debajo de la base.
+- `SCALE`: define cómo se interpretan los números de `MELODY STEPS`.
+  - Si `MELODY STEPS` usa números, `SCALE` sí cambia el resultado.
+  - Si `MELODY STEPS` usa notas explícitas (`C3 D3 F3`), `SCALE` no aplica.
 - `RANGE`: escala la amplitud de intervalos (100 = referencia natural del patrón).
 - `GLIDE`: suaviza transiciones entre notas.
 - `BPM`: afecta principalmente modo `BEND WHOLE PHRASE`.

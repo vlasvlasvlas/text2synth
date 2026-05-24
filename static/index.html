@@ -223,6 +223,9 @@
                             <option value="custom">CUSTOM</option>
                         </select>
                     </div>
+                    <div class="mode-help">
+                        PRESET carga un punto de partida. Si tocás parámetros manualmente, pasa a CUSTOM.
+                    </div>
                     <div class="param-row">
                         <label for="melody-mode">MODE:</label>
                         <select id="melody-mode" class="term-select">
@@ -268,6 +271,10 @@
                     <div class="mode-help">
                         BASE = nota central (C, C#, D...). MELODY STEPS = movimiento relativo desde BASE. Ejemplo: 0 2 4 2 -1 0.
                     </div>
+                    <div class="mode-help">
+                        Si MELODY STEPS usa números, SCALE sí afecta. Si escribís notas (C3 D3...), SCALE no aplica.
+                    </div>
+                    <div class="mode-help" id="melody-notes-preview">NOTES PREVIEW: C D D# D C# C A# C#</div>
                     <div class="param-row">
                         <label for="melody-depth">RANGE:</label>
                         <input type="range" id="melody-depth" min="25" max="200" value="115" class="term-slider" step="5">

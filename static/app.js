@@ -41,6 +41,7 @@
     const melodyScale = document.getElementById('melody-scale');
     const melodyRoot = document.getElementById('melody-root');
     const melodyPattern = document.getElementById('melody-pattern');
+    const melodyNotesPreview = document.getElementById('melody-notes-preview');
     const melodyBpm = document.getElementById('melody-bpm');
     const melodyDepth = document.getElementById('melody-depth');
     const melodyGlide = document.getElementById('melody-glide');
@@ -100,6 +101,69 @@
     function bindSlider(slider, valId, dec) {
         const fn = () => { const s = document.getElementById(valId); if (s) s.textContent = parseFloat(slider.value).toFixed(dec); };
         slider.addEventListener('input', fn); fn();
+    }
+
+    function melodyScaleSteps(scaleName) {
+        const scales = {
+            major: [0, 2, 4, 5, 7, 9, 11],
+            minor: [0, 2, 3, 5, 7, 8, 10],
+            harmonic_minor: [0, 2, 3, 5, 7, 8, 11],
+            pentatonic_minor: [0, 3, 5, 7, 10],
+            chromatic: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+            whole: [0, 2, 4, 6, 8, 10]
+        };
+        return scales[scaleName] || scales.minor;
+    }
+
+    function degreeToSemitone(degree, scaleName) {
+        const scale = melodyScaleSteps(scaleName);
+        const octave = Math.floor(degree / scale.length);
+        const idx = degree - octave * scale.length;
+        return scale[idx] + octave * 12;
+    }
+
+    function noteNameToSemitone(token) {
+        const m = token.match(/^([a-gA-G])([#b]?)(-?\d+)?$/);
+        if (!m) return null;
+        const base = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 }[m[1].toLowerCase()];
+        const accidental = m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0;
+        const octave = m[3] === undefined ? 4 : Number(m[3]);
+        return base + accidental + (octave - 4) * 12;
+    }
+
+    function semitoneToNoteName(semitone) {
+        const names = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        const m = ((Math.round(semitone) % 12) + 12) % 12;
+        return names[m];
+    }
+
+    function updateMelodyPreview() {
+        if (!melodyNotesPreview) return;
+        const tokens = (melodyPattern.value || '').split(/[\s,]+/).map(t => t.trim()).filter(Boolean).slice(0, 12);
+        if (!tokens.length) {
+            melodyNotesPreview.textContent = 'NOTES PREVIEW: (empty)';
+            return;
+        }
+
+        const root = Number(melodyRoot.value) || 0;
+        const scale = melodyScale.value;
+        const notes = [];
+
+        for (const token of tokens) {
+            if (/^(r|rest|hold|-)$/i.test(token)) {
+                notes.push('REST');
+                continue;
+            }
+            let semitone = null;
+            if (/^-?\d+$/.test(token)) {
+                semitone = root + degreeToSemitone(Number(token), scale);
+            } else {
+                semitone = noteNameToSemitone(token);
+            }
+            if (Number.isFinite(semitone)) notes.push(semitoneToNoteName(semitone));
+        }
+
+        melodyNotesPreview.textContent = `NOTES PREVIEW: ${notes.join(' ') || '(invalid pattern)'}`;
     }
 
     function updateEngineParamVisibility(engine) {
@@ -192,6 +256,7 @@
         loopBpmRow.classList.toggle('hidden', ch.loop.mode !== 'bpm');
         // Update all slider displays
         document.querySelectorAll('.term-slider').forEach(s => s.dispatchEvent(new Event('input')));
+        updateMelodyPreview();
     }
 
     // ─── Apply audio state to channel engine ─────────────────
@@ -538,6 +603,7 @@
         el.addEventListener(evt, () => {
             if (el === melodyMode && melodyTimingDetails && melodyMode.value === 'phrase') melodyTimingDetails.open = true;
             if (!applyingMelodyPreset && melodyPreset.value !== 'custom') melodyPreset.value = 'custom';
+            updateMelodyPreview();
             onSidebarChange();
         });
     });
@@ -699,6 +765,7 @@
             applyConfigDefaults(ch, config);
             loadFromChannel(ch);
             applyAudioState(ch);
+            updateMelodyPreview();
         } catch (e) {
             console.warn('Config load failed:', e);
             chMgr.createChannel('I FEEL FANTASTIC');
