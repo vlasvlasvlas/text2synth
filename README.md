@@ -104,9 +104,9 @@ Abrir:
 http://localhost:5050
 ```
 
-## Uso de MELODY (claro y directo)
+## Uso de MELODY
 
-Si querés que “cante notas” de forma clara:
+Para que la voz siga un patrón de notas:
 
 1. Elegí un engine (`sam`, `say`, `espeak` o `espeak_ng`).
 2. Activá `MELODY`.
@@ -131,7 +131,7 @@ Cómo se interpreta:
 - `GLIDE`: suaviza transiciones entre notas.
 - `BPM`: afecta principalmente modo `BEND WHOLE PHRASE`.
 
-## Controles que suelen confundir
+## Controles
 
 - `SPEED` (en motores de voz): velocidad de lectura.
 - `SPEED` en SAM: el slider está invertido respecto al raw de SAM — mayor valor = más rápido, igual que el resto de engines.
