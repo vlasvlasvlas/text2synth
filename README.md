@@ -111,13 +111,19 @@ Si querés que “cante notas” de forma clara:
 1. Elegí un engine (`sam`, `say`, `espeak` o `espeak_ng`).
 2. Activá `MELODY`.
 3. Poné `MODE = NOTES PER WORD`.
-4. Definí `STEPS` (ejemplo: `0 2 4 7 4 2 0`).
-5. Dejá `RANGE` cerca de `100` para una lectura fiel del patrón.
-6. Desactivá `WOBBLE` si querés notas limpias.
+4. Elegí `BASE` (la nota central, por ejemplo `C`).
+5. Definí `MELODY STEPS` (ejemplo: `0 2 4 7 4 2 0`).
+6. Dejá `RANGE` cerca de `100` para una lectura fiel del patrón.
+7. Desactivá `WOBBLE` si querés notas limpias.
 
 Cómo se interpreta:
 
-- `STEPS`: patrón melódico (grados o notas).
+- `BASE`: nota de referencia (centro tonal). Ejemplo: si `BASE = C`, el `0` arranca en C.
+- `MELODY STEPS`: patrón relativo respecto de `BASE`.
+  - `0` = quedarse en BASE
+  - `2` = subir 2 grados de la escala elegida
+  - `-1` = bajar 1 grado
+  - Ejemplo `0 2 4 2 -1 0 -3 -1` = sube, vuelve y cae por debajo de la base.
 - `RANGE`: escala la amplitud de intervalos (100 = referencia natural del patrón).
 - `GLIDE`: suaviza transiciones entre notas.
 - `BPM`: afecta principalmente modo `BEND WHOLE PHRASE`.
@@ -127,7 +133,7 @@ Cómo se interpreta:
 - `SPEED` (en motores de voz): velocidad de lectura.
 - `SPEED*` en SAM: en SAM clásico, valores más bajos suelen sonar más rápido.
 - `SHIFT` (WOBBLE): transposición base en cents.
-- `RANGE` (MELODY): profundidad intervalar del patrón.
+- `RANGE` (MELODY): cuánto se exageran o reducen los saltos de `MELODY STEPS`.
 
 ## API
 

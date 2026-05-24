@@ -231,7 +231,7 @@
                         </select>
                     </div>
                     <div class="mode-help">
-                        WORD = una nota por palabra (usa STEPS). PHRASE = curva continua. Para notas claras: desactivar WOBBLE.
+                        WORD = una nota por palabra (usa MELODY STEPS). PHRASE = curva continua. Para notas claras: desactivar WOBBLE.
                     </div>
                     <div class="param-row">
                         <label for="melody-scale">SCALE:</label>
@@ -245,7 +245,7 @@
                         </select>
                     </div>
                     <div class="param-row">
-                        <label for="melody-root">ROOT:</label>
+                        <label for="melody-root">BASE:</label>
                         <select id="melody-root" class="term-select">
                             <option value="0" selected>C</option>
                             <option value="1">C#</option>
@@ -262,8 +262,11 @@
                         </select>
                     </div>
                     <div class="param-row">
-                        <label for="melody-pattern">STEPS:</label>
+                        <label for="melody-pattern">MELODY STEPS:</label>
                         <input type="text" id="melody-pattern" class="term-text" value="0 2 4 2 -1 0 -3 -1" autocomplete="off" spellcheck="false">
+                    </div>
+                    <div class="mode-help">
+                        BASE = nota central (C, C#, D...). MELODY STEPS = movimiento relativo desde BASE. Ejemplo: 0 2 4 2 -1 0.
                     </div>
                     <div class="param-row">
                         <label for="melody-depth">RANGE:</label>
