@@ -116,7 +116,10 @@ def synthesize_say(text: str, voice: str = "Alex", rate: int = 175) -> bytes:
     wav_path = aiff_path.replace(".aiff", ".wav")
 
     try:
-        run_cmd(["say", "-v", voice, "-r", str(rate), "-o", aiff_path, "--", text], timeout=30)
+        # [[rate N]] is embedded in the text stream so macOS say applies it across
+        # all sentence boundaries — without it the rate resets to voice default at each ".".
+        embedded = f"[[rate {rate}]]{text}"
+        run_cmd(["say", "-v", voice, "-r", str(rate), "-o", aiff_path, "--", embedded], timeout=30)
         run_cmd(["afconvert", "-f", "WAVE", "-d", "LEI16", aiff_path, wav_path], timeout=10)
         with open(wav_path, "rb") as f:
             return f.read()
