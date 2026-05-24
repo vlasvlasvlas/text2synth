@@ -1,168 +1,181 @@
 # TEXT2SYNTH
 
-Retro terminal voice synthesizer built with Flask, SAM-style speech synthesis, macOS `say`, and a multi-channel Web Audio engine.
+Sintetizador retro de texto a voz con interfaz web tipo terminal, backend Flask y motor de audio Web Audio multipista.
 
-TEXT2SYNTH turns typed text into voice loops, drones, delay/filter/LFO chains, and eerie note-following speech inspired by the "I Feel Fantastic" vocal texture.
+`TEXT2SYNTH` convierte texto escrito en voces robotizadas, loops y texturas experimentales inspiradas en sintetizadores de voz clásicos.
 
 ![TEXT2SYNTH interface](screenshot.png)
 
-## Features
+## Qué incluye hoy
 
-- Up to 4 independent terminal channels.
-- One shared `AudioContext` with per-channel effects chains.
-- SAM 1982-style voice engine via `samtts`.
-- macOS `say` voices when running locally on macOS.
-- Per-channel volume, filter, delay, LFO, drone, sing wobble, and loop state.
-- `MELODY` modes:
-  - `NOTES PER WORD`: splits text into words and assigns each word a note from a scale/pattern.
-  - `BEND WHOLE PHRASE`: bends the whole spoken phrase through the note pattern.
-- YAML-configured SAM presets, melody presets, and initial defaults.
+- Hasta 4 canales independientes.
+- Motor de audio compartido con efectos por canal.
+- Motor `SAM` (estilo 1982) vía `samtts`.
+- Motor `say` de macOS (cuando está disponible en el sistema).
+- Presets de voz y melodía configurables desde `config.yaml`.
+- Modos de melodía para mapear palabras/frases a notas.
 
-## Requirements
+## Motores de síntesis soportados
 
-- macOS for full local experience with `say` voices.
-- Python 3.8+.
-- Homebrew `portaudio` for `samtts` dependencies.
+Actualmente hay **2 motores**:
 
-```bash
-brew install portaudio
-```
+1. `sam` (cross-platform): funciona en macOS, Linux y Windows porque depende del paquete Python `samtts`.
+2. `say` (solo macOS): usa binarios del sistema (`say` + `afconvert`).
 
-## Install
+### Enlaces de referencia
+
+- `samtts` (PyPI): [https://pypi.org/project/samtts/](https://pypi.org/project/samtts/)
+- S.A.M. (contexto histórico): [https://en.wikipedia.org/wiki/Software_Automatic_Mouth](https://en.wikipedia.org/wiki/Software_Automatic_Mouth)
+- `say` (Apple): [https://ss64.com/mac/say.html](https://ss64.com/mac/say.html)
+
+## Historia y orígenes
+
+El carácter sonoro de este proyecto nace de la síntesis clásica por software:
+
+- **S.A.M. (1982)**: "Software Automatic Mouth", uno de los sintetizadores de voz por software más icónicos de la era 8-bit.
+- **Voces de sistema macOS (`say`)**: capa adicional para contraste entre timbres retro y voces del sistema operativo.
+- **Diseño del proyecto**: mezclar TTS clásico con procesamiento musical en tiempo real (melodía, bend, LFO, filtro, delay, drone) para crear un instrumento vocal, no solo un lector de texto.
+
+## Dependencias de Python (importante)
+
+Archivo actual: `requirements.txt`
+
+- `flask`: servidor web/API.
+- `flask-cors`: CORS para frontend local.
+- `pyyaml`: lectura de presets y defaults desde `config.yaml`.
+- `samtts`: motor principal de síntesis retro (S.A.M.) en Python.
+
+## Dependencias del sistema operativo
+
+### macOS
+
+Requerido:
+
+- Python 3.8+
+- `venv`
+- (opcional) Homebrew
+
+Notas:
+
+- `sam` funciona con `pip install -r requirements.txt`.
+- `say` funciona porque viene con macOS (`say` y `afconvert` ya instalados normalmente).
+
+Instalación:
 
 ```bash
 git clone https://github.com/vlasvlasvlas/text2synth.git
 cd text2synth
-
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Run
+Ejecución:
 
 ```bash
 source venv/bin/activate
 python server.py
 ```
 
-Open:
+Abrir en navegador:
 
 ```text
 http://localhost:5050
 ```
 
-You can override the port:
+### Linux
+
+Requerido:
+
+- Python 3.8+
+- `python3-venv`
+- `pip`
+
+Instalación (Debian/Ubuntu ejemplo):
 
 ```bash
-PORT=8080 python server.py
+sudo apt update
+sudo apt install -y python3 python3-venv python3-pip
+git clone https://github.com/vlasvlasvlas/text2synth.git
+cd text2synth
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
 
-Enable Flask debug only when developing:
+Ejecución:
 
 ```bash
-FLASK_DEBUG=1 python server.py
+source venv/bin/activate
+python server.py
 ```
 
-## Basic Use
+Limitaciones en Linux:
 
-1. Type text into a channel terminal.
-2. Press `Enter` to synthesize and play it.
-3. Use `ArrowUp` and `ArrowDown` to browse that channel's command history.
-4. Use `[+]` to add up to 4 channels.
-5. Click a channel or tab to make it active.
-6. Adjust the sidebar; controls apply only to the active channel.
+- `sam`: sí disponible.
+- `say`: no disponible (es exclusivo de macOS).
 
-## Voice Melody
+### Windows
 
-`MELODY` is the main way to make the voice follow notes instead of only wobbling around one pitch.
+Requerido:
 
-The sidebar keeps the musical path visible and pushes secondary sound design controls into collapsed advanced sections:
+- Python 3.8+ (instalado desde python.org)
+- PowerShell o CMD
 
-- `MELODY`: the actual note-following layer. It reads `SCALE`, `ROOT`, and `STEPS` to move words or phrases through a melody.
-- `BASE PITCH / WOBBLE`: optional transpose plus vibrato. It makes the voice unstable, but it does not choose notes.
-- `ADVANCED FX`: filter, LFO, delay, and drone.
+Instalación (PowerShell):
 
-Recommended starting point:
+```powershell
+git clone https://github.com/vlasvlasvlas/text2synth.git
+cd text2synth
+py -3 -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
 
-1. Select `SAM (1982 RETRO)`.
-2. Select SAM preset `I FEEL FANTASTIC`.
-3. Enable `MELODY -> ENABLE MELODY`.
-4. Set `MODE` to `NOTES PER WORD`.
-5. Open `BASE PITCH / WOBBLE` only if you want extra wobble.
-6. Try presets like `FANTASTIC MINOR`, `MINOR DESCENT`, `TRITONE`, or `OCTAVE TEST`.
-7. Type `I feel fantastic hey hey hey` and press `Enter`.
+Ejecución:
 
-When `NOTES PER WORD` runs, the terminal prints a short `NOTES:` trace with the cents applied to the first words. Use `OCTAVE TEST` if you need to confirm the pitch movement audibly; it intentionally uses large jumps.
+```powershell
+.\venv\Scripts\Activate.ps1
+python server.py
+```
 
-Controls:
-
-- `PRESET`: loads a configured melody preset.
-- `MODE`: `NOTES PER WORD` for one note per word, `BEND WHOLE PHRASE` for pitch automation over the full phrase.
-- `SCALE`: major, minor, harmonic minor, pentatonic minor, chromatic, or whole tone.
-- `ROOT`: transposes the pattern by semitone.
-- `STEPS`: scale degrees or note names.
-- `BPM`: note step rate for `BEND WHOLE PHRASE`. `NOTES PER WORD` keeps natural word spacing instead of inserting BPM silence.
-- `RANGE`: interval exaggeration. Higher values sound more uncanny.
-- `GLIDE`: pitch smoothing time. Higher values smear notes into each other.
-- `REPEAT STEPS`: loops the note pattern across long phrases.
-
-Example `STEPS` using scale degrees:
+Abrir en navegador:
 
 ```text
-0 2 4 2 -1 0 -3 -1
+http://localhost:5050
 ```
 
-Example `STEPS` using note names:
+Limitaciones en Windows:
 
-```text
-C3 D3 Eb3 G3 F3 D3
-```
+- `sam`: sí disponible.
+- `say`: no disponible (es exclusivo de macOS).
 
-## Loops
+## Uso básico
 
-Each channel can loop independently.
-
-1. Type a phrase and press `Enter`.
-2. Enable `LOOP -> AUTO-REPEAT`.
-3. Choose `SECONDS` or `BPM`.
-4. Enable `CYCLE VOICES` if you want SAM presets or voices to rotate between loop ticks.
-
-Loops preserve each channel's own engine, text, melody, effects, and volume.
-
-## Project Structure
-
-```text
-text2synth/
-├── server.py
-├── config.yaml
-├── requirements.txt
-├── screenshot.png
-├── static/
-│   ├── index.html
-│   ├── style.css
-│   ├── app.js
-│   ├── audio-engine.js
-│   ├── channel-manager.js
-│   └── tts-client.js
-└── README.md
-```
+1. Escribí texto en un canal.
+2. Presioná `Enter` para sintetizar y reproducir.
+3. Usá `[+]` para agregar hasta 4 canales.
+4. Ajustá controles del sidebar del canal activo.
+5. Probá `MELODY` para seguimiento de notas por palabra o frase.
 
 ## API
 
 ### `GET /api/config`
 
-Returns the full YAML configuration.
+Devuelve configuración completa de `config.yaml`.
 
 ### `GET /api/voices`
 
-Returns available macOS `say` voices and SAM presets.
+Devuelve voces disponibles para cada motor:
+
+- `say`: voces del sistema (macOS).
+- `sam`: presets definidos en `config.yaml`.
 
 ### `POST /api/synthesize`
 
-Synthesizes a phrase and returns WAV audio.
+Sintetiza texto y devuelve WAV.
 
-SAM example:
+Ejemplo `sam`:
 
 ```json
 {
@@ -176,7 +189,7 @@ SAM example:
 }
 ```
 
-macOS `say` example:
+Ejemplo `say` (solo macOS):
 
 ```json
 {
@@ -187,154 +200,42 @@ macOS `say` example:
 }
 ```
 
-## Scaling `config.yaml`
+## Configuración (`config.yaml`)
 
-`config.yaml` is the main way to scale the instrument without editing JavaScript.
+`config.yaml` controla:
 
-The file currently controls:
+- Presets SAM (`sam_presets`)
+- Voces sugeridas de macOS (`say_preferred_voices`)
+- Presets de melodía (`melody_presets`)
+- Defaults iniciales de motor, efectos, loop y melodía
 
-- SAM voice presets.
-- Preferred macOS `say` voices.
-- Voice melody presets.
-- Initial defaults for engine, phrase, volume, effects, sing, melody, and loop.
+## Posibilidades de expansión
 
-### Add a SAM Preset
+Además de TTS básico, el proyecto ya está orientado a:
 
-Add an item under `sam_presets`.
+- Performance en vivo por canales
+- Diseño sonoro vocal retro/uncanny
+- Secuencias melódicas por texto
+- Looping de frases con variación de preset/voz
+- Integración futura de más motores vía un selector único de engine en backend
 
-```yaml
-sam_presets:
-  - id: my_voice
-    name: My Voice
-    speed: 80
-    pitch: 50
-    mouth: 140
-    throat: 180
-```
+## Próximos pasos: motores clásicos/antiguos para sumar
 
-Parameter ranges:
+Motores históricos que podés evaluar para ampliar el proyecto:
 
-- `speed`: `1-255`, lower is slower.
-- `pitch`: `1-255`, lower is deeper.
-- `mouth`: `1-255`, changes mouth/formant color.
-- `throat`: `1-255`, changes throat/formant color.
+1. **eSpeak / eSpeak NG** (descendiente moderno de eSpeak clásico)
+   - [https://github.com/espeak-ng/espeak-ng](https://github.com/espeak-ng/espeak-ng)
+2. **Festival** (University of Edinburgh, clásico en Linux)
+   - [https://www.cstr.ed.ac.uk/projects/festival/](https://www.cstr.ed.ac.uk/projects/festival/)
+3. **Flite** (CMU, runtime liviano derivado de Festival)
+   - [https://cmuflite.org/](https://cmuflite.org/)
+4. **MBROLA** (concatenativo, muy usado en TTS clásico)
+   - [https://github.com/numediart/MBROLA](https://github.com/numediart/MBROLA)
+5. **DECtalk (vías emulación/proyectos comunitarios)**
+   - [https://dectalk.github.io/](https://dectalk.github.io/)
 
-Keep `id` stable and lowercase. The UI uses `id` internally.
+Siguiente iteración recomendada: integrar `espeak-ng` como tercer engine (`engine = espeak`) por ser multiplataforma y fácil de automatizar por CLI.
 
-### Add a Melody Preset
+## Licencia
 
-Add an item under `melody_presets`.
-
-```yaml
-melody_presets:
-  - id: haunted_minor
-    name: Haunted Minor
-    mode: word
-    scale: minor
-    root: 0
-    pattern: "0 2 4 2 -1 0 -3 -1"
-    bpm: 92
-    depth: 120
-    glide: 0.07
-```
-
-Fields:
-
-- `mode`: `word` or `phrase`.
-- `scale`: `major`, `minor`, `harmonic_minor`, `pentatonic_minor`, `chromatic`, `whole`.
-- `root`: semitone offset from C. `0=C`, `1=C#`, `2=D`, ... `11=B`.
-- `pattern`: scale degrees or note names.
-- `bpm`: note step rate.
-- `depth`: interval multiplier in percent.
-- `glide`: pitch smoothing in seconds.
-
-Scale-degree pattern:
-
-```yaml
-pattern: "0 2 4 2 -1 0 -3 -1"
-```
-
-Note-name pattern:
-
-```yaml
-pattern: "C3 D3 Eb3 G3 F3 D3"
-```
-
-### Set Startup Defaults
-
-Edit `defaults`.
-
-```yaml
-defaults:
-  engine: sam
-  preset: creepy
-  default_phrase: "I FEEL FANTASTIC."
-  volume: 0.8
-
-  sing:
-    enabled: false
-    pitch: -200
-    wobble_rate: 3.0
-    wobble_depth: 150
-    wobble_wave: sine
-
-  melody:
-    enabled: false
-    preset: fantastic_minor
-    mode: word
-    scale: minor
-    root: 0
-    pattern: "0 2 4 2 -1 0 -3 -1"
-    bpm: 92
-    depth: 115
-    glide: 0.06
-    loop: true
-```
-
-Refresh the browser after changing frontend defaults or presets.
-
-### Scaling Guidelines
-
-- Keep presets short and named clearly; they become dropdown options.
-- Prefer adding new presets over changing existing `id` values.
-- Use `word` mode for robotic note-per-word singing.
-- Use `phrase` mode for smoother pitch-bent speech and fewer backend requests.
-- Keep `NOTES PER WORD` phrases under 32 words for best latency.
-- If loops feel slow the first time, repeat them once; the frontend caches word buffers.
-- For cloud hosting, avoid depending on macOS `say`; SAM works better cross-platform.
-
-## Deployment Notes
-
-This is not a static site. It needs the Flask backend because the browser requests WAV audio from `/api/synthesize`.
-
-For local network use, the app binds to `0.0.0.0`.
-
-For cloud hosts:
-
-- Set command: `python server.py`.
-- Set `PORT` if the platform does not inject it automatically.
-- Expect `say` voices to fail on Linux hosts unless you add another TTS engine.
-- SAM synthesis is the portable path.
-
-## Architecture
-
-```text
-Browser terminal UI
-  -> /api/synthesize
-  -> Flask server
-  -> SAM or macOS say WAV
-  -> shared AudioContext
-  -> per-channel filter/delay/LFO/drone/limiter
-  -> speakers
-```
-
-Important frontend modules:
-
-- `static/channel-manager.js`: channel state and dynamic terminal DOM.
-- `static/audio-engine.js`: Web Audio graph and note/pitch scheduling.
-- `static/tts-client.js`: API client and WAV decoding.
-- `static/app.js`: UI binding, loops, melody, and channel synchronization.
-
-## License
-
-MIT
+MIT. Ver `LICENSE`.
