@@ -36,11 +36,13 @@
     const singWobbleDepth = document.getElementById('sing-wobble-depth');
     const singWobbleWave = document.getElementById('sing-wobble-wave');
     const melodyEnabled = document.getElementById('melody-enabled');
+    const melodyCleanNotes = document.getElementById('melody-clean-notes');
     const melodyPreset = document.getElementById('melody-preset');
     const melodyMode = document.getElementById('melody-mode');
     const melodyScale = document.getElementById('melody-scale');
     const melodyRoot = document.getElementById('melody-root');
     const melodyPattern = document.getElementById('melody-pattern');
+    const melodyAutoNoteView = document.getElementById('melody-auto-note-view');
     const melodyNotesPreview = document.getElementById('melody-notes-preview');
     const melodyBpm = document.getElementById('melody-bpm');
     const melodyDepth = document.getElementById('melody-depth');
@@ -88,6 +90,8 @@
     const WORD_MELODY_GAP_SEC = 0.018;
     const WORD_MELODY_TRIM_THRESHOLD = 0.006;
     const WORD_MELODY_TRIM_PAD_SEC = 0.012;
+    const SAM_SPEED_MIN = 1;
+    const SAM_SPEED_MAX = 255;
     let MELODY_PRESETS = {
         fantastic_minor: { mode: 'word', scale: 'minor', root: 0, pattern: '0 2 4 2 -1 0 -3 -1', bpm: 92, depth: 115, glide: 0.06 },
         minor_descent: { mode: 'word', scale: 'minor', root: 0, pattern: '6 5 4 2 1 0 -2 -1', bpm: 78, depth: 125, glide: 0.075 },
@@ -101,6 +105,36 @@
     function bindSlider(slider, valId, dec) {
         const fn = () => { const s = document.getElementById(valId); if (s) s.textContent = parseFloat(slider.value).toFixed(dec); };
         slider.addEventListener('input', fn); fn();
+    }
+
+    function clampSamSpeed(v) {
+        const n = Number(v) || SAM_SPEED_MIN;
+        return Math.max(SAM_SPEED_MIN, Math.min(SAM_SPEED_MAX, Math.round(n)));
+    }
+
+    // UI semantics (all engines): higher SPEED => faster speech.
+    // SAM raw semantics: higher speed value => slower speech.
+    function uiSpeedToSamRaw(uiSpeed) {
+        const s = clampSamSpeed(uiSpeed);
+        return (SAM_SPEED_MIN + SAM_SPEED_MAX) - s;
+    }
+
+    function samRawToUiSpeed(rawSpeed) {
+        const r = clampSamSpeed(rawSpeed);
+        return (SAM_SPEED_MIN + SAM_SPEED_MAX) - r;
+    }
+
+    function ensureSelectValue(selectEl, preferredValue = '') {
+        if (!selectEl || !selectEl.options || selectEl.options.length === 0) return '';
+        const wanted = String(preferredValue ?? '');
+        const hasWanted = Array.from(selectEl.options).some(o => o.value === wanted);
+        if (hasWanted) {
+            selectEl.value = wanted;
+            return wanted;
+        }
+        const fallback = selectEl.options[0].value;
+        selectEl.value = fallback;
+        return fallback;
     }
 
     function melodyScaleSteps(scaleName) {
@@ -137,17 +171,55 @@
         return names[m];
     }
 
+    function tokenToNoteName(token, root, scale) {
+        if (/^(r|rest|hold|-)$/i.test(token)) return 'REST';
+        if (/^-?\d+$/.test(token)) return semitoneToNoteName(root + degreeToSemitone(Number(token), scale));
+        const named = noteNameToSemitone(token);
+        return Number.isFinite(named) ? semitoneToNoteName(named) : null;
+    }
+
+    function renderMelodyPatternView() {
+        if (!melodyAutoNoteView || !melodyPattern) return;
+        if (!melodyPattern.dataset.rawSteps) melodyPattern.dataset.rawSteps = melodyPattern.value || '';
+
+        if (!melodyAutoNoteView.checked) {
+            melodyPattern.readOnly = false;
+            melodyPattern.value = melodyPattern.dataset.rawSteps || melodyPattern.value;
+            return;
+        }
+
+        const raw = melodyPattern.dataset.rawSteps || '';
+        const tokens = raw.split(/[\s,]+/).map(t => t.trim()).filter(Boolean);
+        if (!tokens.length) return;
+
+        const root = Number(melodyRoot.value) || 0;
+        const scale = melodyScale.value;
+        const notes = tokens.map(t => tokenToNoteName(t, root, scale)).filter(Boolean);
+        if (notes.length) {
+            melodyPattern.value = notes.join(' ');
+            melodyPattern.readOnly = true;
+        }
+    }
+
     function updateMelodyPreview() {
         if (!melodyNotesPreview) return;
-        const tokens = (melodyPattern.value || '').split(/[\s,]+/).map(t => t.trim()).filter(Boolean).slice(0, 12);
+        const sourcePattern = (melodyAutoNoteView && melodyAutoNoteView.checked && melodyPattern.dataset.rawSteps)
+            ? melodyPattern.dataset.rawSteps
+            : melodyPattern.value;
+        const tokens = (sourcePattern || '').split(/[\s,]+/).map(t => t.trim()).filter(Boolean).slice(0, 12);
         if (!tokens.length) {
             melodyNotesPreview.textContent = 'NOTES PREVIEW: (empty)';
+            melodyScale.disabled = false;
+            melodyScale.title = '';
+            melodyScale.style.opacity = '1';
             return;
         }
 
         const root = Number(melodyRoot.value) || 0;
         const scale = melodyScale.value;
         const notes = [];
+        let hasNumeric = false;
+        let hasNamed = false;
 
         for (const token of tokens) {
             if (/^(r|rest|hold|-)$/i.test(token)) {
@@ -156,14 +228,27 @@
             }
             let semitone = null;
             if (/^-?\d+$/.test(token)) {
+                hasNumeric = true;
                 semitone = root + degreeToSemitone(Number(token), scale);
             } else {
+                hasNamed = true;
                 semitone = noteNameToSemitone(token);
             }
             if (Number.isFinite(semitone)) notes.push(semitoneToNoteName(semitone));
         }
 
-        melodyNotesPreview.textContent = `NOTES PREVIEW: ${notes.join(' ') || '(invalid pattern)'}`;
+        if (hasNamed && !hasNumeric) {
+            melodyScale.disabled = true;
+            melodyScale.title = 'SCALE does not apply when using explicit note names in MELODY STEPS';
+            melodyScale.style.opacity = '0.55';
+            melodyNotesPreview.textContent = `NOTES PREVIEW (ABSOLUTE NOTES): ${notes.join(' ') || '(invalid pattern)'}`;
+            return;
+        }
+
+        melodyScale.disabled = false;
+        melodyScale.title = '';
+        melodyScale.style.opacity = '1';
+        melodyNotesPreview.textContent = `NOTES PREVIEW (SCALE-BASED): ${notes.join(' ') || '(invalid pattern)'}`;
     }
 
     function updateEngineParamVisibility(engine) {
@@ -189,7 +274,10 @@
         ch.espeakNgPitch = +espeakNgPitch.value;
         ch.volume = +channelVolume.value;
         ch.sing = { enabled: singEnabled.checked, pitch: +singPitch.value, wobbleRate: +singWobbleRate.value, wobbleDepth: +singWobbleDepth.value, wobbleWave: singWobbleWave.value };
-        ch.melody = { enabled: melodyEnabled.checked, mode: melodyMode.value, preset: melodyPreset.value, scale: melodyScale.value, root: +melodyRoot.value, pattern: melodyPattern.value, bpm: +melodyBpm.value, depth: +melodyDepth.value, glide: +melodyGlide.value, loop: melodyLoop.checked };
+        const melodyPatternRaw = (melodyPattern && melodyPattern.dataset && melodyPattern.dataset.rawSteps)
+            ? melodyPattern.dataset.rawSteps
+            : melodyPattern.value;
+        ch.melody = { enabled: melodyEnabled.checked, mode: melodyMode.value, preset: melodyPreset.value, scale: melodyScale.value, root: +melodyRoot.value, pattern: melodyPatternRaw, bpm: +melodyBpm.value, depth: +melodyDepth.value, glide: +melodyGlide.value, loop: melodyLoop.checked };
         ch.filter = { type: filterType.value, cutoff: +filterCutoff.value, resonance: +filterResonance.value };
         ch.delay = { enabled: delayEnabled.checked, time: +delayTime.value, feedback: +delayFeedback.value, mix: +delayMix.value };
         ch.lfo = { enabled: lfoEnabled.checked, rate: +lfoRate.value, depth: +lfoDepth.value, wave: lfoWave.value, target: lfoTarget.value };
@@ -212,13 +300,14 @@
         samSpeed.value = ch.engineParams.speed; samPitch.value = ch.engineParams.pitch;
         samMouth.value = ch.engineParams.mouth; samThroat.value = ch.engineParams.throat;
         // Say
-        sayVoice.value = ch.sayVoice; sayRate.value = ch.sayRate;
+        ch.sayVoice = ensureSelectValue(sayVoice, ch.sayVoice);
+        sayRate.value = ch.sayRate;
         // eSpeak
-        espeakVoice.value = ch.espeakVoice || 'en';
+        ch.espeakVoice = ensureSelectValue(espeakVoice, ch.espeakVoice || 'en');
         espeakRate.value = ch.espeakRate || 175;
         espeakPitch.value = ch.espeakPitch ?? 50;
-        // Flite
-        espeakNgVoice.value = ch.espeakNgVoice || 'en';
+        // eSpeak NG
+        ch.espeakNgVoice = ensureSelectValue(espeakNgVoice, ch.espeakNgVoice || 'en');
         espeakNgRate.value = ch.espeakNgRate || 175;
         espeakNgPitch.value = ch.espeakNgPitch ?? 50;
         // Channel
@@ -227,11 +316,14 @@
         singEnabled.checked = ch.sing.enabled; singPitch.value = ch.sing.pitch;
         singWobbleRate.value = ch.sing.wobbleRate; singWobbleDepth.value = ch.sing.wobbleDepth;
         singWobbleWave.value = ch.sing.wobbleWave;
+        if (melodyCleanNotes) melodyCleanNotes.checked = !ch.sing.enabled;
         if (pitchFxDetails && ch.sing.enabled) pitchFxDetails.open = true;
         // Melody
         melodyEnabled.checked = ch.melody.enabled; melodyMode.value = ch.melody.mode || 'word'; melodyPreset.value = ch.melody.preset;
         melodyScale.value = ch.melody.scale; melodyRoot.value = ch.melody.root;
-        melodyPattern.value = ch.melody.pattern; melodyBpm.value = ch.melody.bpm;
+        melodyPattern.value = ch.melody.pattern;
+        melodyPattern.dataset.rawSteps = ch.melody.pattern;
+        melodyBpm.value = ch.melody.bpm;
         melodyDepth.value = ch.melody.depth; melodyGlide.value = ch.melody.glide;
         melodyLoop.checked = ch.melody.loop;
         if (melodyTimingDetails && ch.melody.mode === 'phrase') melodyTimingDetails.open = true;
@@ -247,6 +339,9 @@
         droneEnabled.checked = ch.drone.enabled; droneWave.value = ch.drone.wave;
         droneFreq.value = ch.drone.freq; droneDetune.value = ch.drone.detune;
         droneVoices.value = ch.drone.voices; droneVolume.value = ch.drone.volume;
+        droneNote.value = Array.from(droneNote.options).reduce((best, opt) =>
+            Math.abs(parseFloat(opt.value) - ch.drone.freq) < Math.abs(parseFloat(best.value) - ch.drone.freq) ? opt : best
+        ).value;
         if (advancedFxDetails && (ch.delay.enabled || ch.lfo.enabled || ch.drone.enabled)) advancedFxDetails.open = true;
         // Loop
         loopEnabled.checked = ch.loop.enabled; loopMode.value = ch.loop.mode;
@@ -254,8 +349,11 @@
         loopCycle.checked = ch.loop.cycleVoices;
         loopSecsRow.classList.toggle('hidden', ch.loop.mode === 'bpm');
         loopBpmRow.classList.toggle('hidden', ch.loop.mode !== 'bpm');
-        // Update all slider displays
+        // Update all slider displays — guard flag prevents melody listeners from resetting preset to 'custom'
+        applyingMelodyPreset = true;
         document.querySelectorAll('.term-slider').forEach(s => s.dispatchEvent(new Event('input')));
+        applyingMelodyPreset = false;
+        renderMelodyPatternView();
         updateMelodyPreview();
     }
 
@@ -332,7 +430,12 @@
         ch.presetId = defaults.preset || ch.presetId;
         const preset = (config.sam_presets || []).find(p => p.id === ch.presetId);
         if (preset) {
-            ch.engineParams = { speed: preset.speed, pitch: preset.pitch, mouth: preset.mouth, throat: preset.throat };
+            ch.engineParams = {
+                speed: samRawToUiSpeed(preset.speed),
+                pitch: preset.pitch,
+                mouth: preset.mouth,
+                throat: preset.throat
+            };
         }
         ch.volume = defaults.volume ?? ch.volume;
         ch.filter = { ...ch.filter, ...(defaults.filter || {}) };
@@ -380,7 +483,7 @@
     function buildSynthParams(ch) {
         const params = {};
         if (ch.engine === 'sam') {
-            params.speed = ch.engineParams.speed;
+            params.speed = uiSpeedToSamRaw(ch.engineParams.speed);
             params.pitch = ch.engineParams.pitch;
             params.mouth = ch.engineParams.mouth;
             params.throat = ch.engineParams.throat;
@@ -575,7 +678,8 @@
 
     samPreset.addEventListener('change', () => {
         const p = SAM_PRESETS[samPreset.value]; if (!p) return;
-        samSpeed.value = p.speed; samPitch.value = p.pitch; samMouth.value = p.mouth; samThroat.value = p.throat;
+        samSpeed.value = samRawToUiSpeed(p.speed);
+        samPitch.value = p.pitch; samMouth.value = p.mouth; samThroat.value = p.throat;
         [samSpeed, samPitch, samMouth, samThroat].forEach(s => s.dispatchEvent(new Event('input')));
         onSidebarChange();
     });
@@ -589,26 +693,48 @@
         melodyScale.value = p.scale;
         melodyRoot.value = p.root;
         melodyPattern.value = p.pattern;
+        melodyPattern.dataset.rawSteps = p.pattern;
         melodyBpm.value = p.bpm;
         melodyDepth.value = p.depth;
         melodyGlide.value = p.glide;
         if (melodyTimingDetails && p.mode === 'phrase') melodyTimingDetails.open = true;
         [melodyBpm, melodyDepth, melodyGlide].forEach(s => s.dispatchEvent(new Event('input')));
         applyingMelodyPreset = false;
+        renderMelodyPatternView();
         onSidebarChange();
     });
 
     [melodyMode, melodyScale, melodyRoot, melodyPattern, melodyBpm, melodyDepth, melodyGlide].forEach(el => {
         const evt = el.tagName === 'SELECT' ? 'change' : 'input';
         el.addEventListener(evt, () => {
+            if (el === melodyPattern && !melodyPattern.readOnly) {
+                melodyPattern.dataset.rawSteps = melodyPattern.value;
+            }
             if (el === melodyMode && melodyTimingDetails && melodyMode.value === 'phrase') melodyTimingDetails.open = true;
             if (!applyingMelodyPreset && melodyPreset.value !== 'custom') melodyPreset.value = 'custom';
+            renderMelodyPatternView();
             updateMelodyPreview();
             onSidebarChange();
         });
     });
 
+    if (melodyAutoNoteView) {
+        melodyAutoNoteView.addEventListener('change', () => {
+            renderMelodyPatternView();
+            updateMelodyPreview();
+            onSidebarChange();
+        });
+    }
+
     [melodyEnabled, melodyLoop].forEach(el => el.addEventListener('change', onSidebarChange));
+
+    if (melodyCleanNotes) {
+        melodyCleanNotes.addEventListener('change', () => {
+            // Clean notes means disabling wobble layer.
+            singEnabled.checked = !melodyCleanNotes.checked;
+            onSidebarChange();
+        });
+    }
 
     [samSpeed, samPitch, samMouth, samThroat,
      singEnabled, singPitch, singWobbleRate, singWobbleDepth, singWobbleWave,
@@ -658,21 +784,50 @@
         const ch = chMgr.channels.get(chId); if (!ch || ch.isProcessing) return;
 
         if (ch.loop.cycleVoices) {
-            const dropdown = ch.engine === 'sam' ? samPreset : sayVoice;
-            // Only cycle if this is the active channel (sidebar reflects it)
+            const dropdown = ch.engine === 'sam' ? samPreset
+                : ch.engine === 'say' ? sayVoice
+                : ch.engine === 'espeak' ? espeakVoice
+                : espeakNgVoice;
             if (chId === chMgr.activeId) {
                 const nextIdx = (dropdown.selectedIndex + 1) % dropdown.options.length;
                 dropdown.selectedIndex = nextIdx;
                 dropdown.dispatchEvent(new Event('change'));
             } else {
-                // For non-active channels, cycle internally
                 if (ch.engine === 'sam') {
                     const presetKeys = Object.keys(SAM_PRESETS);
                     const curIdx = presetKeys.indexOf(ch.presetId);
                     const nextIdx = (curIdx + 1) % presetKeys.length;
                     ch.presetId = presetKeys[nextIdx];
                     const p = SAM_PRESETS[ch.presetId];
-                    if (p) { ch.engineParams = { speed: p.speed, pitch: p.pitch, mouth: p.mouth, throat: p.throat }; }
+                    if (p) {
+                        ch.engineParams = {
+                            speed: samRawToUiSpeed(p.speed),
+                            pitch: p.pitch,
+                            mouth: p.mouth,
+                            throat: p.throat
+                        };
+                    }
+                } else if (ch.engine === 'say') {
+                    const opts = Array.from(sayVoice.options);
+                    if (opts.length) {
+                        const curIdx = opts.findIndex(o => o.value === ch.sayVoice);
+                        const nextIdx = ((curIdx < 0 ? 0 : curIdx) + 1) % opts.length;
+                        ch.sayVoice = opts[nextIdx].value;
+                    }
+                } else if (ch.engine === 'espeak') {
+                    const opts = Array.from(espeakVoice.options);
+                    if (opts.length) {
+                        const curIdx = opts.findIndex(o => o.value === ch.espeakVoice);
+                        const nextIdx = ((curIdx < 0 ? 0 : curIdx) + 1) % opts.length;
+                        ch.espeakVoice = opts[nextIdx].value;
+                    }
+                } else if (ch.engine === 'espeak_ng') {
+                    const opts = Array.from(espeakNgVoice.options);
+                    if (opts.length) {
+                        const curIdx = opts.findIndex(o => o.value === ch.espeakNgVoice);
+                        const nextIdx = ((curIdx < 0 ? 0 : curIdx) + 1) % opts.length;
+                        ch.espeakNgVoice = opts[nextIdx].value;
+                    }
                 }
             }
         }

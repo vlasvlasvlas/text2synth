@@ -134,7 +134,7 @@ Cómo se interpreta:
 ## Controles que suelen confundir
 
 - `SPEED` (en motores de voz): velocidad de lectura.
-- `SPEED*` en SAM: en SAM clásico, valores más bajos suelen sonar más rápido.
+- `SPEED` en SAM: el slider está invertido respecto al raw de SAM — mayor valor = más rápido, igual que el resto de engines.
 - `SHIFT` (WOBBLE): transposición base en cents.
 - `RANGE` (MELODY): cuánto se exageran o reducen los saltos de `MELODY STEPS`.
 

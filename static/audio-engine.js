@@ -230,7 +230,7 @@ class ChannelAudioEngine {
         if (!match) return null;
         const base = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 }[match[1].toLowerCase()];
         const accidental = match[2] === '#' ? 1 : match[2] === 'b' ? -1 : 0;
-        const octave = match[3] === undefined ? 3 : Number(match[3]);
+        const octave = match[3] === undefined ? 4 : Number(match[3]);
         return base + accidental + (octave - 3) * 12;
     }
 

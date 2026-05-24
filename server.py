@@ -23,7 +23,6 @@ app = Flask(__name__, static_folder="static", static_url_path="")
 CORS(app)
 
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.yaml")
-ENGINE_STATE = {}
 
 
 def load_config():
@@ -64,7 +63,6 @@ def detect_engines():
         sam_error = str(e)
 
     say_available = bool(shutil.which("say") and shutil.which("afconvert"))
-    espeak_bin = _which_first(["espeak-ng", "espeak"])
     espeak_bin = _which_first(["espeak"])
     espeak_ng_bin = _which_first(["espeak-ng"])
 
@@ -102,6 +100,9 @@ def detect_engines():
         "engines": engines,
         "available_engines": [eid for eid, meta in engines.items() if meta.get("available")],
     }
+
+
+ENGINE_STATE = detect_engines()
 
 
 # ─────────────────────────────────────────────────────────────────────────────

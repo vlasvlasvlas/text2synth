@@ -65,7 +65,7 @@
                             </select>
                         </div>
                         <div class="param-row">
-                            <label for="sam-speed">SPEED*:</label>
+                            <label for="sam-speed">SPEED:</label>
                             <input type="range" id="sam-speed" min="1" max="255" value="60" class="term-slider">
                             <span class="slider-val" id="sam-speed-val">60</span>
                         </div>
@@ -143,7 +143,6 @@
                             <span class="slider-val" id="espeak-ng-pitch-val">50</span>
                         </div>
                     </div>
-                    <div class="mode-help">*SAM clásico: valores más bajos hablan más rápido.</div>
                 </section>
 
                 <!-- CHANNEL -->
@@ -224,7 +223,7 @@
                         </select>
                     </div>
                     <div class="mode-help">
-                        PRESET carga un punto de partida. Si tocás parámetros manualmente, pasa a CUSTOM.
+                        PRESET loads a starting point. Manual changes switch to CUSTOM.
                     </div>
                     <div class="param-row">
                         <label for="melody-mode">MODE:</label>
@@ -234,7 +233,17 @@
                         </select>
                     </div>
                     <div class="mode-help">
-                        WORD = una nota por palabra (usa MELODY STEPS). PHRASE = curva continua. Para notas claras: desactivar WOBBLE.
+                        WORD = one note per word (uses MELODY STEPS). PHRASE = continuous bend over the whole phrase.
+                    </div>
+                    <div class="param-row">
+                        <label for="melody-clean-notes" class="toggle-label">
+                            <input type="checkbox" id="melody-clean-notes">
+                            <span class="toggle-indicator"></span>
+                            CLEAN NOTES (WOBBLE OFF)
+                        </label>
+                    </div>
+                    <div class="mode-help">
+                        CLEAN NOTES disables WOBBLE automatically for cleaner pitch steps.
                     </div>
                     <div class="param-row">
                         <label for="melody-scale">SCALE:</label>
@@ -268,11 +277,18 @@
                         <label for="melody-pattern">MELODY STEPS:</label>
                         <input type="text" id="melody-pattern" class="term-text" value="0 2 4 2 -1 0 -3 -1" autocomplete="off" spellcheck="false">
                     </div>
-                    <div class="mode-help">
-                        BASE = nota central (C, C#, D...). MELODY STEPS = movimiento relativo desde BASE. Ejemplo: 0 2 4 2 -1 0.
+                    <div class="param-row">
+                        <label for="melody-auto-note-view" class="toggle-label">
+                            <input type="checkbox" id="melody-auto-note-view" checked>
+                            <span class="toggle-indicator"></span>
+                            SHOW STEPS AS NOTES
+                        </label>
                     </div>
                     <div class="mode-help">
-                        Si MELODY STEPS usa números, SCALE sí afecta. Si escribís notas (C3 D3...), SCALE no aplica.
+                        BASE = tonal center (C, C#, D...). MELODY STEPS = scale degrees relative to BASE. Example: 0 2 4 2 -1 0.
+                    </div>
+                    <div class="mode-help">
+                        Numeric steps use SCALE. Explicit note names (C3 D3...) bypass SCALE.
                     </div>
                     <div class="mode-help" id="melody-notes-preview">NOTES PREVIEW: C D D# D C# C A# C#</div>
                     <div class="param-row">
@@ -536,10 +552,10 @@
                     <div class="info-title">TEXT2SYNTH</div>
                     <div class="info-sep">═══════════════════════════</div>
                     <p>Retro terminal text-to-speech synthesizer inspired by the "I Feel Fantastic" video and 1980s speech synthesis technology.</p>
-                    <p>Combines two TTS engines — SAM (Software Automatic Mouth, 1982) and macOS system voices — with melody controls plus a real-time Web Audio effects chain: base pitch/wobble, filter, LFO, delay, and drone.</p>
+                    <p>Combines four TTS engines — SAM (1982), macOS Say, eSpeak, and eSpeak-NG — with melody controls plus a real-time Web Audio effects chain: base pitch/wobble, filter, LFO, delay, and drone.</p>
                     <p>Type text, press Enter, twist the knobs.</p>
                     <div class="info-sep">───────────────────────────</div>
-                    <p>ENGINES: SAM 1982 · macOS Say</p>
+                    <p>ENGINES: SAM 1982 · macOS Say · eSpeak · eSpeak-NG</p>
                     <p>EFFECTS: Filter · LFO · Delay · Drone</p>
                     <p>MODES: Melody · Loop · Voice Cycling</p>
                     <div class="info-sep">───────────────────────────</div>
