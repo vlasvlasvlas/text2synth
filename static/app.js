@@ -112,16 +112,10 @@
         return Math.max(SAM_SPEED_MIN, Math.min(SAM_SPEED_MAX, Math.round(n)));
     }
 
-    // UI semantics (all engines): higher SPEED => faster speech.
-    // SAM raw semantics: higher speed value => slower speech.
-    function uiSpeedToSamRaw(uiSpeed) {
-        const s = clampSamSpeed(uiSpeed);
-        return (SAM_SPEED_MIN + SAM_SPEED_MAX) - s;
-    }
-
-    function samRawToUiSpeed(rawSpeed) {
-        const r = clampSamSpeed(rawSpeed);
-        return (SAM_SPEED_MIN + SAM_SPEED_MAX) - r;
+    // config.yaml stores raw SAM speed values (lower raw = faster).
+    // Convert to UI-semantic speed (higher = faster) when loading presets.
+    function samConfigToUiSpeed(rawSpeed) {
+        return (SAM_SPEED_MIN + SAM_SPEED_MAX) - clampSamSpeed(rawSpeed);
     }
 
     function ensureSelectValue(selectEl, preferredValue = '') {
@@ -431,7 +425,7 @@
         const preset = (config.sam_presets || []).find(p => p.id === ch.presetId);
         if (preset) {
             ch.engineParams = {
-                speed: samRawToUiSpeed(preset.speed),
+                speed: samConfigToUiSpeed(preset.speed),
                 pitch: preset.pitch,
                 mouth: preset.mouth,
                 throat: preset.throat
@@ -483,7 +477,7 @@
     function buildSynthParams(ch) {
         const params = {};
         if (ch.engine === 'sam') {
-            params.speed = uiSpeedToSamRaw(ch.engineParams.speed);
+            params.speed = ch.engineParams.speed;
             params.pitch = ch.engineParams.pitch;
             params.mouth = ch.engineParams.mouth;
             params.throat = ch.engineParams.throat;
@@ -678,7 +672,7 @@
 
     samPreset.addEventListener('change', () => {
         const p = SAM_PRESETS[samPreset.value]; if (!p) return;
-        samSpeed.value = samRawToUiSpeed(p.speed);
+        samSpeed.value = samConfigToUiSpeed(p.speed);
         samPitch.value = p.pitch; samMouth.value = p.mouth; samThroat.value = p.throat;
         [samSpeed, samPitch, samMouth, samThroat].forEach(s => s.dispatchEvent(new Event('input')));
         onSidebarChange();
@@ -801,7 +795,7 @@
                     const p = SAM_PRESETS[ch.presetId];
                     if (p) {
                         ch.engineParams = {
-                            speed: samRawToUiSpeed(p.speed),
+                            speed: samConfigToUiSpeed(p.speed),
                             pitch: p.pitch,
                             mouth: p.mouth,
                             throat: p.throat

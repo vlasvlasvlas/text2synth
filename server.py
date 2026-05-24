@@ -131,6 +131,9 @@ def synthesize_sam(text: str, speed: int = 72, pitch: int = 64,
                    sing_mode: bool = False) -> bytes:
     from samtts import SamTTS
 
+    # speed is UI-semantic (higher = faster); SAM raw is inverted (lower = faster)
+    sam_speed = max(1, min(255, (1 + 255) - speed))
+
     sam = SamTTS()
     tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
     tmp_path = tmp.name
@@ -140,7 +143,7 @@ def synthesize_sam(text: str, speed: int = 72, pitch: int = 64,
         sam.save(
             text,
             tmp_path,
-            speed=speed,
+            speed=sam_speed,
             pitch=pitch,
             mouth=mouth,
             throat=throat,
@@ -153,7 +156,7 @@ def synthesize_sam(text: str, speed: int = 72, pitch: int = 64,
     except Exception:
         raw = sam.get_audio_data(
             text,
-            speed=speed,
+            speed=sam_speed,
             pitch=pitch,
             mouth=mouth,
             throat=throat,
