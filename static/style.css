@@ -21,7 +21,7 @@
     --error: #ff3333;
     --font-term: 'VT323', 'Courier New', monospace;
     --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
-    --sidebar-w: 300px;
+    --sidebar-w: 320px;
 }
 
 html, body {
@@ -93,7 +93,7 @@ html, body {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 7px 12px 18px;
+    padding: 8px 14px 18px;
     scrollbar-width: thin;
     scrollbar-color: var(--phosphor-dark) var(--bg-panel);
 }
@@ -338,6 +338,11 @@ html, body {
     font-family: var(--font-mono);
     font-size: 11px;
     color: var(--phosphor-dim);
+    min-width: 0;
+}
+
+.param-row > * {
+    min-width: 0;
 }
 
 .param-row label {
@@ -352,6 +357,7 @@ html, body {
     -webkit-appearance: none;
     appearance: none;
     flex: 1;
+    min-width: 0;
     height: 8px;
     background: var(--bg);
     border: 1px solid var(--phosphor-dark);
@@ -403,6 +409,7 @@ html, body {
     font-size: 11px;
     cursor: pointer;
     flex: 1;
+    min-width: 0;
     outline: none;
 }
 
@@ -630,7 +637,7 @@ html, body {
 
 /* --- Responsive --- */
 @media (max-width: 700px) {
-    :root { --sidebar-w: 220px; }
+    :root { --sidebar-w: 250px; }
     .param-row label { min-width: 40px; }
 }
 

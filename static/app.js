@@ -15,7 +15,7 @@
     const samParams = document.getElementById('sam-params');
     const sayParams = document.getElementById('say-params');
     const espeakParams = document.getElementById('espeak-params');
-    const fliteParams = document.getElementById('flite-params');
+    const espeakNgParams = document.getElementById('espeak-ng-params');
     const samPreset = document.getElementById('sam-preset');
     const samSpeed = document.getElementById('sam-speed');
     const samPitch = document.getElementById('sam-pitch');
@@ -26,8 +26,9 @@
     const espeakVoice = document.getElementById('espeak-voice');
     const espeakRate = document.getElementById('espeak-rate');
     const espeakPitch = document.getElementById('espeak-pitch');
-    const fliteVoice = document.getElementById('flite-voice');
-    const fliteRate = document.getElementById('flite-rate');
+    const espeakNgVoice = document.getElementById('espeak-ng-voice');
+    const espeakNgRate = document.getElementById('espeak-ng-rate');
+    const espeakNgPitch = document.getElementById('espeak-ng-pitch');
     const channelVolume = document.getElementById('channel-volume');
     const singEnabled = document.getElementById('sing-enabled');
     const singPitch = document.getElementById('sing-pitch');
@@ -76,7 +77,7 @@
         sam: 'SAM (1982 RETRO)',
         say: 'MACOS SAY',
         espeak: 'ESPEAK (CLASSIC)',
-        flite: 'FLITE (CMU)'
+        espeak_ng: 'ESPEAK-NG'
     };
     let AVAILABLE_ENGINES = ['sam'];
     let applyingMelodyPreset = false;
@@ -105,7 +106,7 @@
         samParams.classList.toggle('hidden', engine !== 'sam');
         sayParams.classList.toggle('hidden', engine !== 'say');
         espeakParams.classList.toggle('hidden', engine !== 'espeak');
-        fliteParams.classList.toggle('hidden', engine !== 'flite');
+        espeakNgParams.classList.toggle('hidden', engine !== 'espeak_ng');
     }
 
     // ─── Save sidebar state TO active channel ────────────────
@@ -119,8 +120,9 @@
         ch.espeakVoice = espeakVoice.value;
         ch.espeakRate = +espeakRate.value;
         ch.espeakPitch = +espeakPitch.value;
-        ch.fliteVoice = fliteVoice.value;
-        ch.fliteRate = +fliteRate.value;
+        ch.espeakNgVoice = espeakNgVoice.value;
+        ch.espeakNgRate = +espeakNgRate.value;
+        ch.espeakNgPitch = +espeakNgPitch.value;
         ch.volume = +channelVolume.value;
         ch.sing = { enabled: singEnabled.checked, pitch: +singPitch.value, wobbleRate: +singWobbleRate.value, wobbleDepth: +singWobbleDepth.value, wobbleWave: singWobbleWave.value };
         ch.melody = { enabled: melodyEnabled.checked, mode: melodyMode.value, preset: melodyPreset.value, scale: melodyScale.value, root: +melodyRoot.value, pattern: melodyPattern.value, bpm: +melodyBpm.value, depth: +melodyDepth.value, glide: +melodyGlide.value, loop: melodyLoop.checked };
@@ -152,8 +154,9 @@
         espeakRate.value = ch.espeakRate || 175;
         espeakPitch.value = ch.espeakPitch ?? 50;
         // Flite
-        fliteVoice.value = ch.fliteVoice || 'slt';
-        fliteRate.value = ch.fliteRate || 140;
+        espeakNgVoice.value = ch.espeakNgVoice || 'en';
+        espeakNgRate.value = ch.espeakNgRate || 175;
+        espeakNgPitch.value = ch.espeakNgPitch ?? 50;
         // Channel
         channelVolume.value = ch.volume ?? 0.8;
         // Sing
@@ -316,7 +319,9 @@
             params.pitch = ch.engineParams.pitch;
             params.mouth = ch.engineParams.mouth;
             params.throat = ch.engineParams.throat;
-            params.sing_mode = ch.sing.enabled || ch.melody.enabled;
+            // Keep SAM internal sing mode tied only to WOBBLE.
+            // Melody pitch is handled in WebAudio; coupling both causes blurred pitch motion.
+            params.sing_mode = ch.sing.enabled;
         } else if (ch.engine === 'say') {
             params.voice = ch.sayVoice;
             params.rate = ch.sayRate;
@@ -324,9 +329,10 @@
             params.voice = ch.espeakVoice;
             params.rate = ch.espeakRate;
             params.pitch = ch.espeakPitch;
-        } else if (ch.engine === 'flite') {
-            params.voice = ch.fliteVoice;
-            params.rate = ch.fliteRate;
+        } else if (ch.engine === 'espeak_ng') {
+            params.voice = ch.espeakNgVoice;
+            params.rate = ch.espeakNgRate;
+            params.pitch = ch.espeakNgPitch;
         }
         return params;
     }
@@ -546,7 +552,7 @@
      droneEnabled, droneWave, droneNote, droneFreq, droneDetune, droneVoices, droneVolume,
      sayVoice, sayRate,
      espeakVoice, espeakRate, espeakPitch,
-     fliteVoice, fliteRate,
+     espeakNgVoice, espeakNgRate, espeakNgPitch,
      channelVolume, loopCycle
     ].forEach(el => {
         if (!el) return;
@@ -655,7 +661,8 @@
     bindSlider(samMouth, 'sam-mouth-val', 0); bindSlider(samThroat, 'sam-throat-val', 0);
     bindSlider(sayRate, 'say-rate-val', 0);
     bindSlider(espeakRate, 'espeak-rate-val', 0); bindSlider(espeakPitch, 'espeak-pitch-val', 0);
-    bindSlider(fliteRate, 'flite-rate-val', 0);
+    bindSlider(espeakNgRate, 'espeak-ng-rate-val', 0);
+    bindSlider(espeakNgPitch, 'espeak-ng-pitch-val', 0);
     bindSlider(channelVolume, 'channel-volume-val', 2);
     bindSlider(singPitch, 'sing-pitch-val', 0); bindSlider(singWobbleRate, 'sing-wobble-rate-val', 1);
     bindSlider(singWobbleDepth, 'sing-wobble-depth-val', 0);
@@ -710,6 +717,7 @@
                 r.disabled = !isAvailable;
                 const label = r.closest('label');
                 if (label) {
+                    label.style.display = isAvailable ? '' : 'none';
                     label.style.opacity = isAvailable ? '1' : '0.35';
                     label.title = isAvailable ? '' : 'Engine not available on this OS';
                 }
@@ -734,13 +742,13 @@
                 });
             }
 
-            if (voices.flite && voices.flite.length > 0) {
-                fliteVoice.innerHTML = '';
-                voices.flite.forEach(v => {
+            if (voices.espeak_ng && voices.espeak_ng.length > 0) {
+                espeakNgVoice.innerHTML = '';
+                voices.espeak_ng.forEach(v => {
                     const opt = document.createElement('option');
                     opt.value = v.id;
-                    opt.textContent = `${v.name}`.toUpperCase();
-                    fliteVoice.appendChild(opt);
+                    opt.textContent = `${v.name} (${v.lang || 'n/a'})`.toUpperCase();
+                    espeakNgVoice.appendChild(opt);
                 });
             }
 

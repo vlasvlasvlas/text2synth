@@ -3,8 +3,8 @@ text2synth — Flask backend for retro text-to-speech synthesis.
 Supports engines:
   - sam:    SAM (Software Automatic Mouth, 1982) via samtts
   - say:    macOS 'say' command (system voices)
-  - espeak: eSpeak/eSpeak NG CLI
-  - flite:  CMU Flite CLI
+  - espeak: eSpeak CLI
+  - espeak_ng: eSpeak NG CLI
 """
 
 import io
@@ -13,7 +13,6 @@ import platform
 import re
 import shutil
 import subprocess
-import sys
 import tempfile
 import wave
 import yaml
@@ -43,24 +42,6 @@ def run_cmd(cmd, timeout=20, text=False):
     return subprocess.run(cmd, check=True, capture_output=True, timeout=timeout, text=text)
 
 
-def _attempt_install_optional_python_deps():
-    """
-    Install optional Python deps we can handle ourselves.
-    Default enabled: TEXT2SYNTH_AUTO_INSTALL_PY=1
-    """
-    if os.environ.get("TEXT2SYNTH_AUTO_INSTALL_PY", "1") != "1":
-        return
-
-    try:
-        import pyttsx3  # noqa: F401
-    except Exception:
-        try:
-            run_cmd([sys.executable, "-m", "pip", "install", "pyttsx3"], timeout=90)
-            print("[engine-setup] installed optional dependency: pyttsx3")
-        except Exception as e:
-            print(f"[engine-setup] could not install pyttsx3 automatically: {e}")
-
-
 def _which_first(candidates):
     for name in candidates:
         path = shutil.which(name)
@@ -84,7 +65,8 @@ def detect_engines():
 
     say_available = bool(shutil.which("say") and shutil.which("afconvert"))
     espeak_bin = _which_first(["espeak-ng", "espeak"])
-    flite_bin = _which_first(["flite"])
+    espeak_bin = _which_first(["espeak"])
+    espeak_ng_bin = _which_first(["espeak-ng"])
 
     engines = {
         "sam": {
@@ -106,12 +88,12 @@ def detect_engines():
             "bin": espeak_bin,
             "reason": "ok" if espeak_bin else "requires espeak-ng or espeak binary",
         },
-        "flite": {
-            "id": "flite",
-            "name": "FLITE (CMU)",
-            "available": bool(flite_bin),
-            "bin": flite_bin,
-            "reason": "ok" if flite_bin else "requires flite binary",
+        "espeak_ng": {
+            "id": "espeak_ng",
+            "name": "ESPEAK-NG",
+            "available": bool(espeak_ng_bin),
+            "bin": espeak_ng_bin,
+            "reason": "ok" if espeak_ng_bin else "requires espeak-ng binary",
         },
     }
 
@@ -189,33 +171,18 @@ def synthesize_sam(text: str, speed: int = 72, pitch: int = 64,
             os.unlink(tmp_path)
 
 
-def synthesize_espeak(text: str, voice: str = "en", rate: int = 175, pitch: int = 50) -> bytes:
-    bin_name = ENGINE_STATE.get("engines", {}).get("espeak", {}).get("bin") or "espeak-ng"
+def synthesize_espeak_bin(bin_name: str, text: str, voice: str = "en", rate: int = 175, pitch: int = 50) -> bytes:
+    resolved_voice = _resolve_espeak_voice(bin_name, voice)
     tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
     tmp_path = tmp.name
     tmp.close()
     try:
-        run_cmd([bin_name, "-v", voice, "-s", str(rate), "-p", str(pitch), "-w", tmp_path, text], timeout=30)
-        with open(tmp_path, "rb") as f:
-            return f.read()
-    finally:
-        if os.path.exists(tmp_path):
-            os.unlink(tmp_path)
-
-
-def synthesize_flite(text: str, voice: str = "", rate: int = 140) -> bytes:
-    bin_name = ENGINE_STATE.get("engines", {}).get("flite", {}).get("bin") or "flite"
-    tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
-    tmp_path = tmp.name
-    tmp.close()
-
-    stretch = max(0.35, min(3.0, 140.0 / max(60.0, float(rate))))
-    cmd = [bin_name, "-t", text, "-o", tmp_path, "-setf", "duration_stretch", f"{stretch:.3f}"]
-    if voice:
-        cmd.extend(["-voice", voice])
-
-    try:
-        run_cmd(cmd, timeout=30)
+        try:
+            run_cmd([bin_name, "-v", resolved_voice, "-s", str(rate), "-p", str(pitch), "-w", tmp_path, text], timeout=30)
+        except subprocess.CalledProcessError:
+            # Some espeak-ng voices may be listed but fail for specific scripts/text.
+            # Fallback to a stable default so the channel does not hard-fail.
+            run_cmd([bin_name, "-v", "en", "-s", str(rate), "-p", str(pitch), "-w", tmp_path, text], timeout=30)
         with open(tmp_path, "rb") as f:
             return f.read()
     finally:
@@ -238,12 +205,12 @@ def get_macos_voices():
         return []
 
 
-def get_espeak_voices():
-    meta = ENGINE_STATE.get("engines", {}).get("espeak", {})
+def get_espeak_voices(engine_key="espeak"):
+    meta = ENGINE_STATE.get("engines", {}).get(engine_key, {})
     if not meta.get("available"):
         return []
 
-    bin_name = meta.get("bin") or "espeak-ng"
+    bin_name = meta.get("bin") or "espeak"
     try:
         result = run_cmd([bin_name, "--voices"], timeout=8, text=True)
         voices = []
@@ -252,10 +219,10 @@ def get_espeak_voices():
             if not line or line.lower().startswith("pty"):
                 continue
             parts = re.split(r"\s+", line)
-            if len(parts) >= 4 and parts[0].isdigit():
+            if len(parts) >= 5 and parts[0].isdigit():
                 lang = parts[1]
                 name = parts[3]
-                voices.append({"id": name, "name": name, "lang": lang})
+                voices.append({"id": lang, "name": name, "lang": lang})
         # Deduplicate while preserving order
         seen = set()
         out = []
@@ -269,32 +236,40 @@ def get_espeak_voices():
         return [{"id": "en", "name": "en", "lang": "en"}]
 
 
-def get_flite_voices():
-    meta = ENGINE_STATE.get("engines", {}).get("flite", {})
-    if not meta.get("available"):
-        return []
+def _resolve_espeak_voice(bin_name: str, requested: str) -> str:
+    """
+    Map requested voice token to a valid -v identifier.
+    Accepts both Language IDs (en-us, fr-fr, etc.) and older VoiceName values
+    such as English_(Shavian_alphabet).
+    """
+    req = (requested or "").strip()
+    if not req:
+        return "en"
 
-    bin_name = meta.get("bin") or "flite"
     try:
-        result = subprocess.run([bin_name, "-lv"], capture_output=True, text=True, timeout=8)
-        text_out = (result.stdout or "") + "\n" + (result.stderr or "")
-        voices = []
-        for line in text_out.splitlines():
-            if "voices available" in line.lower():
-                tail = line.split(":", 1)[-1].strip()
-                for token in tail.split():
-                    token = token.strip()
-                    if token:
-                        voices.append({"id": token, "name": token.upper(), "lang": "n/a"})
-        if voices:
-            return voices
-        # Common fallback list
-        return [
-            {"id": "slt", "name": "SLT", "lang": "en_US"},
-            {"id": "kal", "name": "KAL", "lang": "en_US"},
-        ]
+        result = run_cmd([bin_name, "--voices"], timeout=8, text=True)
+        by_lang = {}
+        by_name = {}
+        for line in result.stdout.splitlines():
+            line = line.strip()
+            if not line or line.lower().startswith("pty"):
+                continue
+            parts = re.split(r"\s+", line)
+            if len(parts) >= 5 and parts[0].isdigit():
+                lang = parts[1]
+                voice_name = parts[3]
+                by_lang[lang.lower()] = lang
+                by_name[voice_name.lower()] = lang
+
+        key = req.lower()
+        if key in by_lang:
+            return by_lang[key]
+        if key in by_name:
+            return by_name[key]
     except Exception:
-        return [{"id": "slt", "name": "SLT", "lang": "en_US"}]
+        pass
+
+    return req
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -336,17 +311,22 @@ def api_synthesize():
                 sing_mode=bool(data.get("sing_mode", False)),
             )
         elif engine == "espeak":
-            audio = synthesize_espeak(
+            espeak_bin = ENGINE_STATE.get("engines", {}).get("espeak", {}).get("bin") or "espeak"
+            audio = synthesize_espeak_bin(
+                espeak_bin,
                 text,
                 voice=data.get("voice", "en"),
                 rate=int(data.get("rate", 175)),
                 pitch=int(data.get("pitch", 50)),
             )
-        elif engine == "flite":
-            audio = synthesize_flite(
+        elif engine == "espeak_ng":
+            espeak_ng_bin = ENGINE_STATE.get("engines", {}).get("espeak_ng", {}).get("bin") or "espeak-ng"
+            audio = synthesize_espeak_bin(
+                espeak_ng_bin,
                 text,
-                voice=data.get("voice", ""),
-                rate=int(data.get("rate", 140)),
+                voice=data.get("voice", "en"),
+                rate=int(data.get("rate", 175)),
+                pitch=int(data.get("pitch", 50)),
             )
         else:
             return jsonify({"error": f"Unknown engine: {engine}"}), 400
@@ -367,8 +347,8 @@ def api_voices():
     voices = {
         "say": get_macos_voices() if ENGINE_STATE["engines"]["say"]["available"] else [],
         "sam": CONFIG.get("sam_presets", []),
-        "espeak": get_espeak_voices(),
-        "flite": get_flite_voices(),
+        "espeak": get_espeak_voices("espeak"),
+        "espeak_ng": get_espeak_voices("espeak_ng"),
         "engine_meta": ENGINE_STATE["engines"],
         "available_engines": ENGINE_STATE["available_engines"],
         "os": ENGINE_STATE["os"],
@@ -384,7 +364,6 @@ def api_config():
 
 
 if __name__ == "__main__":
-    _attempt_install_optional_python_deps()
     ENGINE_STATE = detect_engines()
 
     port = int(os.environ.get("PORT", 5050))

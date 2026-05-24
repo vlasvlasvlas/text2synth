@@ -45,9 +45,9 @@
                             ESPEAK (CLASSIC)
                         </label>
                         <label class="radio-label">
-                            <input type="radio" name="engine" value="flite">
+                            <input type="radio" name="engine" value="espeak_ng">
                             <span class="radio-indicator"></span>
-                            FLITE (CMU)
+                            ESPEAK-NG
                         </label>
                     </div>
 
@@ -65,7 +65,7 @@
                             </select>
                         </div>
                         <div class="param-row">
-                            <label for="sam-speed">SPEED:</label>
+                            <label for="sam-speed">SPEED*:</label>
                             <input type="range" id="sam-speed" min="1" max="255" value="60" class="term-slider">
                             <span class="slider-val" id="sam-speed-val">60</span>
                         </div>
@@ -100,7 +100,7 @@
                             </select>
                         </div>
                         <div class="param-row">
-                            <label for="say-rate">RATE:</label>
+                            <label for="say-rate">SPEED:</label>
                             <input type="range" id="say-rate" min="50" max="400" value="175" class="term-slider">
                             <span class="slider-val" id="say-rate-val">175</span>
                         </div>
@@ -114,7 +114,7 @@
                             </select>
                         </div>
                         <div class="param-row">
-                            <label for="espeak-rate">RATE:</label>
+                            <label for="espeak-rate">SPEED:</label>
                             <input type="range" id="espeak-rate" min="80" max="360" value="175" class="term-slider">
                             <span class="slider-val" id="espeak-rate-val">175</span>
                         </div>
@@ -125,19 +125,25 @@
                         </div>
                     </div>
 
-                    <div class="engine-params hidden" id="flite-params">
+                    <div class="engine-params hidden" id="espeak-ng-params">
                         <div class="param-row">
-                            <label for="flite-voice">VOICE:</label>
-                            <select id="flite-voice" class="term-select">
-                                <option value="slt">SLT</option>
+                            <label for="espeak-ng-voice">VOICE:</label>
+                            <select id="espeak-ng-voice" class="term-select">
+                                <option value="en">EN</option>
                             </select>
                         </div>
                         <div class="param-row">
-                            <label for="flite-rate">RATE:</label>
-                            <input type="range" id="flite-rate" min="80" max="300" value="140" class="term-slider">
-                            <span class="slider-val" id="flite-rate-val">140</span>
+                            <label for="espeak-ng-rate">SPEED:</label>
+                            <input type="range" id="espeak-ng-rate" min="80" max="360" value="175" class="term-slider">
+                            <span class="slider-val" id="espeak-ng-rate-val">175</span>
+                        </div>
+                        <div class="param-row">
+                            <label for="espeak-ng-pitch">PITCH:</label>
+                            <input type="range" id="espeak-ng-pitch" min="0" max="99" value="50" class="term-slider">
+                            <span class="slider-val" id="espeak-ng-pitch-val">50</span>
                         </div>
                     </div>
+                    <div class="mode-help">*SAM clásico: valores más bajos hablan más rápido.</div>
                 </section>
 
                 <!-- CHANNEL -->
@@ -225,7 +231,7 @@
                         </select>
                     </div>
                     <div class="mode-help">
-                        WORD = note per word. PHRASE = one pitch curve. BPM affects phrase mode.
+                        WORD = una nota por palabra (usa STEPS). PHRASE = curva continua. Para notas claras: desactivar WOBBLE.
                     </div>
                     <div class="param-row">
                         <label for="melody-scale">SCALE:</label>
