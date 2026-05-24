@@ -14,6 +14,8 @@
     const engineRadios = document.querySelectorAll('input[name="engine"]');
     const samParams = document.getElementById('sam-params');
     const sayParams = document.getElementById('say-params');
+    const espeakParams = document.getElementById('espeak-params');
+    const fliteParams = document.getElementById('flite-params');
     const samPreset = document.getElementById('sam-preset');
     const samSpeed = document.getElementById('sam-speed');
     const samPitch = document.getElementById('sam-pitch');
@@ -21,6 +23,11 @@
     const samThroat = document.getElementById('sam-throat');
     const sayVoice = document.getElementById('say-voice');
     const sayRate = document.getElementById('say-rate');
+    const espeakVoice = document.getElementById('espeak-voice');
+    const espeakRate = document.getElementById('espeak-rate');
+    const espeakPitch = document.getElementById('espeak-pitch');
+    const fliteVoice = document.getElementById('flite-voice');
+    const fliteRate = document.getElementById('flite-rate');
     const channelVolume = document.getElementById('channel-volume');
     const singEnabled = document.getElementById('sing-enabled');
     const singPitch = document.getElementById('sing-pitch');
@@ -65,6 +72,13 @@
     const loopCycle = document.getElementById('loop-cycle');
 
     let SAM_PRESETS = {};
+    const ENGINE_NAMES = {
+        sam: 'SAM (1982 RETRO)',
+        say: 'MACOS SAY',
+        espeak: 'ESPEAK (CLASSIC)',
+        flite: 'FLITE (CMU)'
+    };
+    let AVAILABLE_ENGINES = ['sam'];
     let applyingMelodyPreset = false;
     const AUDIO_BUFFER_CACHE = new Map();
     const MAX_WORD_MELODY_TOKENS = 32;
@@ -87,6 +101,13 @@
         slider.addEventListener('input', fn); fn();
     }
 
+    function updateEngineParamVisibility(engine) {
+        samParams.classList.toggle('hidden', engine !== 'sam');
+        sayParams.classList.toggle('hidden', engine !== 'say');
+        espeakParams.classList.toggle('hidden', engine !== 'espeak');
+        fliteParams.classList.toggle('hidden', engine !== 'flite');
+    }
+
     // ─── Save sidebar state TO active channel ────────────────
     function saveToChannel() {
         const ch = chMgr.getActive(); if (!ch) return;
@@ -95,6 +116,11 @@
         ch.engineParams = { speed: +samSpeed.value, pitch: +samPitch.value, mouth: +samMouth.value, throat: +samThroat.value };
         ch.sayVoice = sayVoice.value;
         ch.sayRate = +sayRate.value;
+        ch.espeakVoice = espeakVoice.value;
+        ch.espeakRate = +espeakRate.value;
+        ch.espeakPitch = +espeakPitch.value;
+        ch.fliteVoice = fliteVoice.value;
+        ch.fliteRate = +fliteRate.value;
         ch.volume = +channelVolume.value;
         ch.sing = { enabled: singEnabled.checked, pitch: +singPitch.value, wobbleRate: +singWobbleRate.value, wobbleDepth: +singWobbleDepth.value, wobbleWave: singWobbleWave.value };
         ch.melody = { enabled: melodyEnabled.checked, mode: melodyMode.value, preset: melodyPreset.value, scale: melodyScale.value, root: +melodyRoot.value, pattern: melodyPattern.value, bpm: +melodyBpm.value, depth: +melodyDepth.value, glide: +melodyGlide.value, loop: melodyLoop.checked };
@@ -114,14 +140,20 @@
         if (!ch) return;
         // Engine
         engineRadios.forEach(r => { r.checked = r.value === ch.engine; });
-        samParams.classList.toggle('hidden', ch.engine !== 'sam');
-        sayParams.classList.toggle('hidden', ch.engine !== 'say');
+        updateEngineParamVisibility(ch.engine);
         // SAM
         samPreset.value = ch.presetId;
         samSpeed.value = ch.engineParams.speed; samPitch.value = ch.engineParams.pitch;
         samMouth.value = ch.engineParams.mouth; samThroat.value = ch.engineParams.throat;
         // Say
         sayVoice.value = ch.sayVoice; sayRate.value = ch.sayRate;
+        // eSpeak
+        espeakVoice.value = ch.espeakVoice || 'en';
+        espeakRate.value = ch.espeakRate || 175;
+        espeakPitch.value = ch.espeakPitch ?? 50;
+        // Flite
+        fliteVoice.value = ch.fliteVoice || 'slt';
+        fliteRate.value = ch.fliteRate || 140;
         // Channel
         channelVolume.value = ch.volume ?? 0.8;
         // Sing
@@ -271,6 +303,10 @@
             ch.loop.bpm = defaults.loop.bpm ?? ch.loop.bpm;
             ch.loop.cycleVoices = defaults.loop.cycle_voices ?? ch.loop.cycleVoices;
         }
+
+        if (!AVAILABLE_ENGINES.includes(ch.engine)) {
+            ch.engine = AVAILABLE_ENGINES[0] || 'sam';
+        }
     }
 
     function buildSynthParams(ch) {
@@ -281,9 +317,16 @@
             params.mouth = ch.engineParams.mouth;
             params.throat = ch.engineParams.throat;
             params.sing_mode = ch.sing.enabled || ch.melody.enabled;
-        } else {
+        } else if (ch.engine === 'say') {
             params.voice = ch.sayVoice;
             params.rate = ch.sayRate;
+        } else if (ch.engine === 'espeak') {
+            params.voice = ch.espeakVoice;
+            params.rate = ch.espeakRate;
+            params.pitch = ch.espeakPitch;
+        } else if (ch.engine === 'flite') {
+            params.voice = ch.fliteVoice;
+            params.rate = ch.fliteRate;
         }
         return params;
     }
@@ -455,8 +498,7 @@
     engineRadios.forEach(r => r.addEventListener('change', () => {
         const ch = chMgr.getActive(); if (!ch) return;
         saveToChannel();
-        samParams.classList.toggle('hidden', ch.engine !== 'sam');
-        sayParams.classList.toggle('hidden', ch.engine !== 'say');
+        updateEngineParamVisibility(ch.engine);
         chMgr.addLine(ch.id, `ENGINE: ${ch.engine.toUpperCase()}`, 'system');
     }));
 
@@ -502,7 +544,10 @@
      delayEnabled, delayTime, delayFeedback, delayMix,
      lfoEnabled, lfoRate, lfoDepth, lfoWave, lfoTarget,
      droneEnabled, droneWave, droneNote, droneFreq, droneDetune, droneVoices, droneVolume,
-     sayVoice, sayRate, channelVolume, loopCycle
+     sayVoice, sayRate,
+     espeakVoice, espeakRate, espeakPitch,
+     fliteVoice, fliteRate,
+     channelVolume, loopCycle
     ].forEach(el => {
         if (!el) return;
         const evt = (el.tagName === 'SELECT' || el.type === 'checkbox') ? 'change' : 'input';
@@ -609,6 +654,8 @@
     bindSlider(samSpeed, 'sam-speed-val', 0); bindSlider(samPitch, 'sam-pitch-val', 0);
     bindSlider(samMouth, 'sam-mouth-val', 0); bindSlider(samThroat, 'sam-throat-val', 0);
     bindSlider(sayRate, 'say-rate-val', 0);
+    bindSlider(espeakRate, 'espeak-rate-val', 0); bindSlider(espeakPitch, 'espeak-pitch-val', 0);
+    bindSlider(fliteRate, 'flite-rate-val', 0);
     bindSlider(channelVolume, 'channel-volume-val', 2);
     bindSlider(singPitch, 'sing-pitch-val', 0); bindSlider(singWobbleRate, 'sing-wobble-rate-val', 1);
     bindSlider(singWobbleDepth, 'sing-wobble-depth-val', 0);
@@ -654,6 +701,20 @@
     async function loadVoices() {
         try {
             const voices = await tts.getVoices();
+            AVAILABLE_ENGINES = Array.isArray(voices.available_engines) && voices.available_engines.length
+                ? voices.available_engines
+                : ['sam'];
+
+            engineRadios.forEach(r => {
+                const isAvailable = AVAILABLE_ENGINES.includes(r.value);
+                r.disabled = !isAvailable;
+                const label = r.closest('label');
+                if (label) {
+                    label.style.opacity = isAvailable ? '1' : '0.35';
+                    label.title = isAvailable ? '' : 'Engine not available on this OS';
+                }
+            });
+
             if (voices.say && voices.say.length > 0) {
                 sayVoice.innerHTML = '';
                 voices.say.forEach(v => {
@@ -661,6 +722,36 @@
                     opt.value = v.id; opt.textContent = `${v.name} (${v.lang})`.toUpperCase();
                     sayVoice.appendChild(opt);
                 });
+            }
+
+            if (voices.espeak && voices.espeak.length > 0) {
+                espeakVoice.innerHTML = '';
+                voices.espeak.forEach(v => {
+                    const opt = document.createElement('option');
+                    opt.value = v.id;
+                    opt.textContent = `${v.name} (${v.lang || 'n/a'})`.toUpperCase();
+                    espeakVoice.appendChild(opt);
+                });
+            }
+
+            if (voices.flite && voices.flite.length > 0) {
+                fliteVoice.innerHTML = '';
+                voices.flite.forEach(v => {
+                    const opt = document.createElement('option');
+                    opt.value = v.id;
+                    opt.textContent = `${v.name}`.toUpperCase();
+                    fliteVoice.appendChild(opt);
+                });
+            }
+
+            const active = chMgr.getActive();
+            if (active) {
+                if (!AVAILABLE_ENGINES.includes(active.engine)) {
+                    active.engine = AVAILABLE_ENGINES[0] || 'sam';
+                    const targetRadio = Array.from(engineRadios).find(r => r.value === active.engine);
+                    if (targetRadio) targetRadio.checked = true;
+                }
+                loadFromChannel(active);
             }
         } catch (e) {}
     }

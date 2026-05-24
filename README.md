@@ -12,15 +12,21 @@ Sintetizador retro de texto a voz con interfaz web tipo terminal, backend Flask 
 - Motor de audio compartido con efectos por canal.
 - Motor `SAM` (estilo 1982) vía `samtts`.
 - Motor `say` de macOS (cuando está disponible en el sistema).
+- Motor `eSpeak` clásico (`espeak-ng`/`espeak`) cuando está instalado.
+- Motor `Flite` (CMU Festival Lite) cuando está instalado.
 - Presets de voz y melodía configurables desde `config.yaml`.
 - Modos de melodía para mapear palabras/frases a notas.
 
 ## Motores de síntesis soportados
 
-Actualmente hay **2 motores**:
+Actualmente hay **4 motores**:
 
 1. `sam` (cross-platform): funciona en macOS, Linux y Windows porque depende del paquete Python `samtts`.
 2. `say` (solo macOS): usa binarios del sistema (`say` + `afconvert`).
+3. `espeak` (cross-platform por binario): usa `espeak-ng` o `espeak` del sistema.
+4. `flite` (cross-platform por binario): usa `flite` del sistema.
+
+El backend detecta automáticamente qué motores están instalados en el sistema operativo actual y el frontend muestra solo esos motores.
 
 ### Enlaces de referencia
 
@@ -54,7 +60,7 @@ Esto permite mantener un flujo local/offline de TTS similar al modelo de `say` (
 - Windows: usar voces SAPI5 ya instaladas en el sistema.
 - macOS: usar NSSpeechSynthesizer vía `pyttsx3` o seguir con `say`.
 
-Nota: este README deja documentada la alternativa; la implementación en código del engine `pyttsx3/system` todavía no está incluida.
+Nota: el proyecto ya detecta engines instalados y habilita solo los disponibles en UI/API.
 
 ## Historia y orígenes
 
@@ -72,6 +78,7 @@ Archivo actual: `requirements.txt`
 - `flask-cors`: CORS para frontend local.
 - `pyyaml`: lectura de presets y defaults desde `config.yaml`.
 - `samtts`: motor principal de síntesis retro (S.A.M.) en Python.
+- `pyttsx3`: dependencia opcional instalada para facilitar futuras rutas de TTS de sistema multiplataforma.
 
 ## Dependencias del sistema operativo
 
@@ -87,6 +94,7 @@ Notas:
 
 - `sam` funciona con `pip install -r requirements.txt`.
 - `say` funciona porque viene con macOS (`say` y `afconvert` ya instalados normalmente).
+- `espeak`/`flite` se detectan si están instalados (ejemplo con Homebrew: `brew install espeak flite`).
 
 Instalación:
 
@@ -142,6 +150,8 @@ Limitaciones en Linux:
 
 - `sam`: sí disponible.
 - `say`: no disponible (es exclusivo de macOS).
+- `espeak`: disponible si instalás `espeak-ng` o `espeak`.
+- `flite`: disponible si instalás `flite`.
 
 ### Windows
 
@@ -177,6 +187,7 @@ Limitaciones en Windows:
 
 - `sam`: sí disponible.
 - `say`: no disponible (es exclusivo de macOS).
+- `espeak`/`flite`: dependen de instalar los binarios y que estén en `PATH`.
 
 ## Uso básico
 
@@ -198,6 +209,9 @@ Devuelve voces disponibles para cada motor:
 
 - `say`: voces del sistema (macOS).
 - `sam`: presets definidos en `config.yaml`.
+- `espeak`: voces detectadas del binario `espeak-ng/espeak`.
+- `flite`: voces detectadas del binario `flite`.
+- `available_engines`: lista de engines realmente instalados para ese host.
 
 ### `POST /api/synthesize`
 
@@ -262,7 +276,7 @@ Motores históricos que podés evaluar para ampliar el proyecto:
 5. **DECtalk (vías emulación/proyectos comunitarios)**
    - [https://dectalk.github.io/](https://dectalk.github.io/)
 
-Siguiente iteración recomendada: integrar `pyttsx3` + `espeak-ng` como engine `system` multiplataforma, y dejar `say` como atajo específico de macOS.
+Siguiente iteración recomendada: agregar un engine `system` con `pyttsx3` (NSSpeechSynthesizer/SAPI5/eSpeak) para tener una capa unificada adicional sobre los engines CLI actuales.
 
 ## Licencia
 

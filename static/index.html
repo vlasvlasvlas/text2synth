@@ -39,6 +39,16 @@
                             <span class="radio-indicator"></span>
                             MACOS SAY
                         </label>
+                        <label class="radio-label">
+                            <input type="radio" name="engine" value="espeak">
+                            <span class="radio-indicator"></span>
+                            ESPEAK (CLASSIC)
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="engine" value="flite">
+                            <span class="radio-indicator"></span>
+                            FLITE (CMU)
+                        </label>
                     </div>
 
                     <!-- SAM controls -->
@@ -93,6 +103,39 @@
                             <label for="say-rate">RATE:</label>
                             <input type="range" id="say-rate" min="50" max="400" value="175" class="term-slider">
                             <span class="slider-val" id="say-rate-val">175</span>
+                        </div>
+                    </div>
+
+                    <div class="engine-params hidden" id="espeak-params">
+                        <div class="param-row">
+                            <label for="espeak-voice">VOICE:</label>
+                            <select id="espeak-voice" class="term-select">
+                                <option value="en">EN</option>
+                            </select>
+                        </div>
+                        <div class="param-row">
+                            <label for="espeak-rate">RATE:</label>
+                            <input type="range" id="espeak-rate" min="80" max="360" value="175" class="term-slider">
+                            <span class="slider-val" id="espeak-rate-val">175</span>
+                        </div>
+                        <div class="param-row">
+                            <label for="espeak-pitch">PITCH:</label>
+                            <input type="range" id="espeak-pitch" min="0" max="99" value="50" class="term-slider">
+                            <span class="slider-val" id="espeak-pitch-val">50</span>
+                        </div>
+                    </div>
+
+                    <div class="engine-params hidden" id="flite-params">
+                        <div class="param-row">
+                            <label for="flite-voice">VOICE:</label>
+                            <select id="flite-voice" class="term-select">
+                                <option value="slt">SLT</option>
+                            </select>
+                        </div>
+                        <div class="param-row">
+                            <label for="flite-rate">RATE:</label>
+                            <input type="range" id="flite-rate" min="80" max="300" value="140" class="term-slider">
+                            <span class="slider-val" id="flite-rate-val">140</span>
                         </div>
                     </div>
                 </section>
