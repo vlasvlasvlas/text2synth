@@ -178,4 +178,4 @@ Parámetros varían por engine (`speed`, `pitch`, `voice`, etc.).
 
 ## Licencia
 
-MIT (`LICENSE`).
+[CC BY-SA 4.0](LICENSE) — © Vladimiro Bellini ([vlasvlasvlas](https://github.com/vlasvlasvlas)). Ver [LICENSE](LICENSE) para los términos completos.
